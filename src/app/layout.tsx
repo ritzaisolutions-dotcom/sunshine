@@ -14,7 +14,7 @@ const fraunces = Fraunces({
 
 export const metadata: Metadata = {
   title: "Sunshine",
-  description: "Maria helps Nourie learn — a girlie chat companion.",
+  description: "Maria Sunshine helps Noorie learn — a girlie chat companion.",
 };
 
 export default function RootLayout({

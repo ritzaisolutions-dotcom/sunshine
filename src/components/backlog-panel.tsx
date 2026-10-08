@@ -43,7 +43,7 @@ export function BacklogPanel({ items, onChange }: BacklogPanelProps) {
             Upgrade backlog
           </h2>
           <p className="mt-1 max-w-md text-sm leading-relaxed text-[#3D2463]/70">
-            Tell Maria what you want changed in Sunshine. She saves every wish
+            Tell Maria Sunshine what you want changed in Sunshine. She saves every wish
             here so nothing gets lost.
           </p>
         </div>
@@ -52,7 +52,7 @@ export function BacklogPanel({ items, onChange }: BacklogPanelProps) {
       {open.length === 0 ? (
         <div className="relative mb-5 rounded-2xl border border-dashed border-[#9B6BC0]/35 bg-white/55 px-4 py-6 text-center text-sm text-[#3D2463]/60">
           No open wishes yet. In chat, say something like “I wish Sunshine
-          could…” and Maria will pin it here.
+          could…” and Maria Sunshine will pin it here.
         </div>
       ) : (
         <ul className="relative mb-5 space-y-3">

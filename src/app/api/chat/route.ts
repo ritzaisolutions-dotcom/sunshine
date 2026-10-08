@@ -52,7 +52,7 @@ function buildUserContent(
       } else {
         parts.push({
           type: "text",
-          text: `Attached file "${file.name}" (${file.mimeType}) could not be fully decoded as text. Please answer using the filename and any context Nourie gave.`,
+          text: `Attached file "${file.name}" (${file.mimeType}) could not be fully decoded as text. Please answer using the filename and any context Noorie gave.`,
         });
       }
     } catch {
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
     body.systemPrompt?.trim() || DEFAULT_SYSTEM_PROMPT,
     `\n\n${BACKLOG_RULE}`,
     body.notesDocument
-      ? `\n\nAbout Nourie (living memory — use this, do not invent):\n${body.notesDocument}`
+      ? `\n\nAbout Noorie (living memory — use this, do not invent):\n${body.notesDocument}`
       : "",
   ]
     .join("")

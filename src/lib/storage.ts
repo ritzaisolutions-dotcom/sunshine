@@ -73,7 +73,7 @@ export function loadSettings(): AdminSettings {
     surpriseLines: stored.surpriseLines ?? [
       "You are doing beautifully, princess.",
       "A little sunshine for you — keep going.",
-      "Maria is proud of how curious you are.",
+      "Maria Sunshine is proud of how curious you are.",
     ],
   };
 }

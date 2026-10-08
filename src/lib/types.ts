@@ -81,7 +81,7 @@ export const EMPTY_NOTES: NourieNotes = {
 
 export function notesToDocument(notes: NourieNotes): string {
   return [
-    `# About Nourie`,
+    `# About Noorie`,
     notes.lastUpdated ? `Last updated: ${notes.lastUpdated}` : "Last updated: —",
     ``,
     `## Who she is`,

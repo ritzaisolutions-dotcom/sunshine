@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BacklogPanel } from "@/components/backlog-panel";
 import { BowField } from "@/components/bow-pattern";
 import { SunLogo } from "@/components/sun-logo";
@@ -25,12 +25,31 @@ export default function AdminPage() {
   const [backlog, setBacklog] = useState<BacklogItem[]>([]);
   const [surpriseDraft, setSurpriseDraft] = useState("");
   const [savedFlash, setSavedFlash] = useState("");
+  const skipFirstSave = useRef(true);
 
   useEffect(() => {
     setSettings(loadSettings());
     setNotes(loadNotes());
     setBacklog(loadBacklog());
   }, []);
+
+  useEffect(() => {
+    if (!settings) return;
+    if (skipFirstSave.current) {
+      skipFirstSave.current = false;
+      return;
+    }
+    const handle = window.setTimeout(() => {
+      saveSettings(settings);
+      const stored = loadSettings();
+      setSavedFlash(
+        stored.systemPrompt === settings.systemPrompt
+          ? "Prompt saved"
+          : "The prompt did not save"
+      );
+    }, 300);
+    return () => window.clearTimeout(handle);
+  }, [settings]);
 
   if (!settings || !notes) {
     return (
@@ -110,7 +129,7 @@ export default function AdminPage() {
                 })
               }
             >
-              Reset to Maria default
+              Reset to Maria Sunshine default
             </Button>
           </div>
         </section>
@@ -149,7 +168,7 @@ export default function AdminPage() {
 
         <section className="sunshine-panel rounded-3xl border border-[#D4B8E8] p-5 shadow-sm">
           <h2 className="mb-3 font-semibold text-[#7B4B9A]">
-            Memory about Nourie
+            Memory about Noorie
           </h2>
           {(
             [

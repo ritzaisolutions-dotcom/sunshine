@@ -89,7 +89,7 @@ const DEMO_SEED: ChatMessage[] = [
     id: "demo-1",
     role: "assistant",
     content:
-      "Hi Nourie — I’m Maria. What would you like to learn or work on today?",
+      "Hi Noorie — I’m Maria Sunshine. What would you like to learn or work on today?",
     createdAt: new Date().toISOString(),
     status: "Ready",
   },
@@ -364,8 +364,8 @@ export function SunshineApp() {
 
       // Continue memory about Nourie
       const transcript = [
-        `Nourie: ${userMessage.content}`,
-        `Maria: ${parsed.text || full}`,
+        `Noorie: ${userMessage.content}`,
+        `Maria Sunshine: ${parsed.text || full}`,
       ].join("\n");
       void fetch("/api/memory", {
         method: "POST",
@@ -441,7 +441,7 @@ export function SunshineApp() {
           <p className="font-[family-name:var(--font-fraunces)] text-2xl font-medium tracking-tight text-[#7B4B9A]">
             Sunshine
           </p>
-          <p className="text-xs text-[#7B4B9A]/75">Maria for Nourie</p>
+          <p className="text-xs text-[#7B4B9A]/75">Maria Sunshine for Noorie</p>
         </div>
       </div>
       <div className="relative z-10 px-3">
@@ -522,7 +522,7 @@ export function SunshineApp() {
             setSidebarOpen(false);
           }}
         >
-          About Nourie
+          About Noorie
         </Button>
         <Link
           href="/admin"
@@ -576,7 +576,7 @@ export function SunshineApp() {
               <p className="font-[family-name:var(--font-fraunces)] text-lg font-medium text-[#7B4B9A]">
                 {active?.title ?? "Sunshine"}
               </p>
-              <p className="text-xs text-[#3D2463]/60">Chat with Maria</p>
+              <p className="text-xs text-[#3D2463]/60">Chat with Maria Sunshine</p>
             </div>
           </div>
           <Button
@@ -586,7 +586,7 @@ export function SunshineApp() {
             className="rounded-full border-[#F2C14E] bg-[#F2C14E]/25 text-[#3D2463] hover:bg-[#F2C14E]/40"
             onClick={() => setShowNotes((v) => !v)}
           >
-            {showNotes ? "Hide notes" : "About Nourie"}
+            {showNotes ? "Hide notes" : "About Noorie"}
           </Button>
         </header>
 
@@ -600,10 +600,10 @@ export function SunshineApp() {
                     Sunshine
                   </h1>
                   <p className="mt-2 text-sm text-[#3D2463]/70">
-                    Say hello to Maria. She is ready when you are.
+                    Say hello to Maria Sunshine. She is ready when you are.
                   </p>
                   <p className="mt-4 rounded-2xl border border-[#F2C14E]/70 bg-[#FAF4FF]/80 px-4 py-3 text-sm text-[#3D2463]">
-                    Want something changed in Sunshine? Just tell Maria. She
+                    Want something changed in Sunshine? Just tell Maria Sunshine. She
                     saves every wish in the upgrade backlog.
                   </p>
                 </div>
@@ -616,7 +616,7 @@ export function SunshineApp() {
                     <MessageContent>
                       {isUser ? (
                         <MessageHeader className="gap-1.5">
-                          Nourie
+                          Noorie
                           <span
                             aria-hidden
                             className="size-1 shrink-0 rounded-full bg-[#F2C14E]"
@@ -628,7 +628,7 @@ export function SunshineApp() {
                       ) : (
                         <MessageHeader className="gap-1.5 self-end">
                           <SunLogo className="size-4" />
-                          Maria
+                          Maria Sunshine
                           <span className="tabular-nums font-normal">
                             {formatTime(message.createdAt)}
                           </span>
@@ -734,7 +734,7 @@ export function SunshineApp() {
                 <Textarea
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
-                  placeholder="Message Maria…"
+                  placeholder="Message Maria Sunshine…"
                   rows={1}
                   className="min-h-11 flex-1 resize-none border-0 bg-transparent shadow-none focus-visible:ring-0"
                   onKeyDown={(e) => {
@@ -755,7 +755,7 @@ export function SunshineApp() {
                 </Button>
               </div>
               <p className="mx-auto mt-2 max-w-2xl text-center text-[11px] text-[#7B4B9A]/80">
-                Tell Maria if you want anything in Sunshine changed. She saves
+                Tell Maria Sunshine if you want anything in Sunshine changed. She saves
                 it in the upgrade backlog.
               </p>
             </div>
@@ -764,7 +764,7 @@ export function SunshineApp() {
           {showNotes && (
             <aside className="sunshine-panel w-full max-w-sm border-l border-[#D4B8E8] p-4 md:block">
               <h2 className="mb-3 text-lg font-semibold text-[#7B4B9A]">
-                About Nourie
+                About Noorie
               </h2>
               <NotesEditor notes={notes} onChange={setNotes} />
             </aside>

@@ -153,7 +153,7 @@ export default function StudySheetPage() {
           <div>
             <h2 className="text-2xl font-semibold text-[#7B4B9A]">Sunshine</h2>
             <p className="text-sm text-[#3D2463]/70">
-              Study sheet for Nourie · Maria
+              Study sheet for Noorie · Maria Sunshine
             </p>
           </div>
         </div>

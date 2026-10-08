@@ -2,7 +2,7 @@ export function LoadingDots() {
   return (
     <div
       className="inline-flex items-center gap-1.5 px-1 py-1"
-      aria-label="Maria is writing"
+      aria-label="Maria Sunshine is writing"
       role="status"
     >
       {[0, 1, 2].map((i) => (
