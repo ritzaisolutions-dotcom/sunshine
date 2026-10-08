@@ -5,10 +5,15 @@ type SunLogoProps = {
   title?: string;
 };
 
-/**
- * Tangled / entangled sun — gold rays with soft purple core glow.
- * Static SVG paths avoid hydration drift.
- */
+/** Corona sun: round disc with separate curved rays, gold on the purple UI. */
+const LONG_RAY =
+  "M30 18.2C25.6 12.4 23.4 5.6 31.6 0.4C32.2 6.2 34.6 12.2 34.2 18.2Z";
+const SHORT_RAY =
+  "M30.6 17.6C27.6 13.2 27.2 8.4 32 5.2C32.2 8.8 34.2 13 33.8 17.6Z";
+
+const LONG_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315];
+const SHORT_ANGLES = [22, 67, 112, 157, 202, 247, 292, 337];
+
 export function SunLogo({ className, title = "Sunshine" }: SunLogoProps) {
   return (
     <svg
@@ -19,37 +24,23 @@ export function SunLogo({ className, title = "Sunshine" }: SunLogoProps) {
       suppressHydrationWarning
     >
       <title>{title}</title>
-      <defs>
-        <radialGradient id="sunCore" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#FFE28A" />
-          <stop offset="55%" stopColor="#F2C14E" />
-          <stop offset="100%" stopColor="#E0A92E" />
-        </radialGradient>
-      </defs>
-      <circle cx="32" cy="32" r="11" fill="url(#sunCore)" />
-      <g stroke="#F2C14E" strokeWidth="3.2" strokeLinecap="round">
-        <line x1="32" y1="3" x2="32" y2="14" />
-        <line x1="32" y1="50" x2="32" y2="61" />
-        <line x1="3" y1="32" x2="14" y2="32" />
-        <line x1="50" y1="32" x2="61" y2="32" />
-        <line x1="11.5" y1="11.5" x2="19.5" y2="19.5" />
-        <line x1="44.5" y1="44.5" x2="52.5" y2="52.5" />
-        <line x1="52.5" y1="11.5" x2="44.5" y2="19.5" />
-        <line x1="19.5" y1="44.5" x2="11.5" y2="52.5" />
-        <line x1="7.8" y1="21.5" x2="17.2" y2="25.2" />
-        <line x1="46.8" y1="38.8" x2="56.2" y2="42.5" />
-        <line x1="56.2" y1="21.5" x2="46.8" y2="25.2" />
-        <line x1="17.2" y1="38.8" x2="7.8" y2="42.5" />
+      <g fill="#F2C14E">
+        {LONG_ANGLES.map((deg) => (
+          <path
+            key={`l-${deg}`}
+            d={LONG_RAY}
+            transform={`rotate(${deg} 32 32)`}
+          />
+        ))}
+        {SHORT_ANGLES.map((deg) => (
+          <path
+            key={`s-${deg}`}
+            d={SHORT_RAY}
+            transform={`rotate(${deg} 32 32)`}
+          />
+        ))}
+        <circle cx="32" cy="32" r="15" />
       </g>
-      {/* Soft entangled swirl in the center */}
-      <path
-        d="M28 30c2-3 6-3 8 0 1.5 2.2-.2 4.5-2.6 4.2-1.6-.2-2.6-1.4-2.4-2.8"
-        fill="none"
-        stroke="#9B6BC0"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
-      <circle cx="32" cy="32" r="3.2" fill="#FFF6D6" opacity="0.85" />
     </svg>
   );
 }
