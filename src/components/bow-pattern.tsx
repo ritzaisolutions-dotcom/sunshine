@@ -47,8 +47,8 @@ export function BowField({ className }: BowFieldProps) {
         className
       )}
     >
-      <div className="sunshine-bow-field absolute inset-0 opacity-[0.38]" />
-      <div className="absolute inset-0 bg-gradient-to-b from-[#F6EEFC]/35 via-transparent to-[#E8D5F5]/45" />
+      <div className="sunshine-bow-field absolute inset-0 opacity-50" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#F7F1FC]/70 via-[#F3EAFB]/40 to-[#EAD8F6]/55" />
     </div>
   );
 }

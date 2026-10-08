@@ -434,15 +434,14 @@ export function SunshineApp() {
   }
 
   const Sidebar = (
-    <aside className="relative flex h-full w-72 flex-col overflow-hidden border-r border-[#D4B8E8] bg-[#E8D5F5]/95 text-[#3D2463]">
-      <BowField className="opacity-80" />
-      <div className="relative z-10 flex items-center gap-3 px-4 py-5">
-        <SunLogo className="size-10" />
+    <aside className="relative flex h-full w-72 flex-col overflow-hidden border-r border-[#E4D0F2] bg-[#F7F1FC] text-[#3D2463]">
+      <div className="relative z-10 flex items-center gap-3 px-5 py-6">
+        <SunLogo className="size-11" />
         <div>
-          <p className="text-lg font-semibold tracking-wide text-[#7B4B9A]">
+          <p className="font-[family-name:var(--font-fraunces)] text-2xl font-medium tracking-tight text-[#7B4B9A]">
             Sunshine
           </p>
-          <p className="text-xs text-[#7B4B9A]/80">Maria & Nourie</p>
+          <p className="text-xs text-[#7B4B9A]/75">Maria for Nourie</p>
         </div>
       </div>
       <div className="relative z-10 px-3">
@@ -470,8 +469,8 @@ export function SunshineApp() {
             className={cn(
               "group flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm",
               chat.id === activeId
-                ? "bg-[#9B6BC0] text-[#FFFDF8] shadow-sm"
-                : "text-[#3D2463] hover:bg-white/50"
+                ? "bg-[#F2C14E]/70 text-[#3D2463]"
+                : "text-[#3D2463] hover:bg-white"
             )}
           >
             <span className="truncate">{chat.title}</span>
@@ -504,7 +503,7 @@ export function SunshineApp() {
                 }}
                 className={cn(
                   "w-full truncate rounded-xl px-3 py-2 text-left text-sm text-[#7B4B9A]/85 hover:bg-white/40",
-                  chat.id === activeId && "bg-[#9B6BC0]/80 text-[#FFFDF8]"
+                  chat.id === activeId && "bg-[#F2C14E]/50 text-[#3D2463]"
                 )}
               >
                 {chat.title}
@@ -560,8 +559,8 @@ export function SunshineApp() {
         </div>
       )}
 
-      <main className="relative z-10 flex min-w-0 flex-1 flex-col">
-        <header className="sunshine-panel flex items-center justify-between border-b border-[#D4B8E8] px-4 py-3">
+      <main className="relative z-10 m-3 flex min-w-0 flex-1 flex-col overflow-hidden rounded-[1.75rem] border border-white/80 bg-[#FAF4FF]/72 shadow-[0_20px_60px_-36px_rgba(123,75,154,0.7)]">
+        <header className="flex items-center justify-between border-b border-[#E4D0F2] px-4 py-3">
           <div className="flex items-center gap-3">
             <Button
               type="button"
@@ -574,7 +573,7 @@ export function SunshineApp() {
             </Button>
             <SunLogo className="size-8 md:hidden" />
             <div>
-              <p className="font-semibold text-[#7B4B9A]">
+              <p className="font-[family-name:var(--font-fraunces)] text-lg font-medium text-[#7B4B9A]">
                 {active?.title ?? "Sunshine"}
               </p>
               <p className="text-xs text-[#3D2463]/60">Chat with Maria</p>
@@ -593,11 +592,11 @@ export function SunshineApp() {
 
         <div className="flex min-h-0 flex-1">
           <section className="flex min-w-0 flex-1 flex-col">
-            <div className="flex-1 space-y-6 overflow-y-auto px-4 py-6 md:px-8">
+            <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 overflow-y-auto px-4 py-8 md:px-6">
               {!active?.messages.length && (
                 <div className="mx-auto mt-16 max-w-md text-center">
                   <SunLogo className="mx-auto size-16" />
-                  <h1 className="mt-4 text-2xl font-semibold text-[#7B4B9A]">
+                  <h1 className="mt-4 font-[family-name:var(--font-fraunces)] text-4xl font-medium text-[#7B4B9A]">
                     Sunshine
                   </h1>
                   <p className="mt-2 text-sm text-[#3D2463]/70">
@@ -626,7 +625,15 @@ export function SunshineApp() {
                             {formatTime(message.createdAt)}
                           </span>
                         </MessageHeader>
-                      ) : null}
+                      ) : (
+                        <MessageHeader className="gap-1.5 self-end">
+                          <SunLogo className="size-4" />
+                          Maria
+                          <span className="tabular-nums font-normal">
+                            {formatTime(message.createdAt)}
+                          </span>
+                        </MessageHeader>
+                      )}
                       <Bubble variant={isUser ? "muted" : "default"}>
                         <BubbleContent>
                           {message.content ||
@@ -646,7 +653,10 @@ export function SunshineApp() {
                       {message.diagram ? (
                         <DiagramView diagram={message.diagram} />
                       ) : null}
-                      {!isUser && message.status ? (
+                      {!isUser &&
+                      message.status &&
+                      message.status !== "Ready" &&
+                      message.status !== "Done" ? (
                         <MessageFooter>{message.status}</MessageFooter>
                       ) : null}
                     </MessageContent>
@@ -684,12 +694,8 @@ export function SunshineApp() {
               </div>
             )}
 
-            <div className="sunshine-panel border-t border-[#D4B8E8] p-4 md:px-8">
-              <p className="mx-auto mb-2 max-w-3xl text-center text-xs text-[#7B4B9A]">
-                Tell Maria if you want anything in Sunshine upgraded. She keeps
-                a backlog of your wishes.
-              </p>
-              <div className="mx-auto flex max-w-3xl items-end gap-2 rounded-3xl border border-[#D4B8E8] bg-[#FAF4FF]/90 p-2 shadow-sm">
+            <div className="px-4 pb-5 pt-2 md:px-6">
+              <div className="mx-auto flex w-full max-w-2xl items-end gap-2 rounded-[1.75rem] border border-[#E4D0F2] bg-[#FAF4FF] p-2 shadow-[0_12px_40px_-24px_rgba(123,75,154,0.65)]">
                 <input
                   ref={fileRef}
                   type="file"
@@ -748,6 +754,10 @@ export function SunshineApp() {
                   <Send className="size-4" />
                 </Button>
               </div>
+              <p className="mx-auto mt-2 max-w-2xl text-center text-[11px] text-[#7B4B9A]/80">
+                Tell Maria if you want anything in Sunshine changed. She saves
+                it in the upgrade backlog.
+              </p>
             </div>
           </section>
 

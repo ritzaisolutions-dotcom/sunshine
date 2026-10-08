@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-nunito);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-fraunces);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -119,11 +119,11 @@
   --sidebar-ring: #f2c14e;
 }
 
-/* Repeating hair bows (Schleifen) — soft lilac + gold accents */
+/* Sparse hair bows (Schleifen), large and quiet so the chat stays readable. */
 .sunshine-bow-field {
   background-color: transparent;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Cg fill-opacity='1'%3E%3Cellipse cx='22' cy='26' rx='10' ry='7.5' fill='%23B48AD4'/%3E%3Cellipse cx='38' cy='26' rx='10' ry='7.5' fill='%23B48AD4'/%3E%3Ccircle cx='30' cy='26' r='3.4' fill='%239B6BC0'/%3E%3Cpath d='M27 32c.8 3.5 1.8 7 3 9.5M33 32c-.8 3.5-1.8 7-3 9.5' stroke='%239B6BC0' stroke-width='1.6' stroke-linecap='round' fill='none'/%3E%3Cellipse cx='66' cy='62' rx='9' ry='6.5' fill='%23F2C14E'/%3E%3Cellipse cx='80' cy='62' rx='9' ry='6.5' fill='%23F2C14E'/%3E%3Ccircle cx='73' cy='62' r='3' fill='%23E0A92E'/%3E%3Cpath d='M70.5 67c.7 3 1.5 6 2.5 8M75.5 67c-.7 3-1.5 6-2.5 8' stroke='%23E0A92E' stroke-width='1.4' stroke-linecap='round' fill='none'/%3E%3C/g%3E%3C/svg%3E");
-  background-size: 96px 96px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Cg fill='%23C9A0E0'%3E%3Cellipse cx='28' cy='36' rx='14' ry='9' transform='rotate(-18 28 36)'/%3E%3Cellipse cx='50' cy='36' rx='14' ry='9' transform='rotate(18 50 36)'/%3E%3Ccircle cx='39' cy='36' r='4' fill='%239B6BC0'/%3E%3Cpath d='M34 40c1 8 3 14 5 18M44 40c-1 8-3 14-5 18' stroke='%239B6BC0' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/g%3E%3Cg fill='%23F2C14E' opacity='0.85'%3E%3Cellipse cx='150' cy='150' rx='12' ry='8' transform='rotate(-16 150 150)'/%3E%3Cellipse cx='170' cy='150' rx='12' ry='8' transform='rotate(16 170 150)'/%3E%3Ccircle cx='160' cy='150' r='3.4' fill='%23E0A92E'/%3E%3Cpath d='M156 154c1 7 2.4 12 4 16M164 154c-1 7-2.4 12-4 16' stroke='%23E0A92E' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 280px 280px;
   background-repeat: repeat;
 }
 
