@@ -60,6 +60,14 @@ export type AdminSettings = {
   surpriseLines: string[];
 };
 
+export type BacklogItem = {
+  id: string;
+  wish: string;
+  createdAt: string;
+  source: "chat" | "admin";
+  done?: boolean;
+};
+
 export const EMPTY_NOTES: NourieNotes = {
   whoSheIs: "",
   howSheLikesToLearn: "",

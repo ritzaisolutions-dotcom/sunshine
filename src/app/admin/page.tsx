@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { BacklogPanel } from "@/components/backlog-panel";
+import { BowField } from "@/components/bow-pattern";
 import { SunLogo } from "@/components/sun-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,28 +11,32 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DEFAULT_SYSTEM_PROMPT } from "@/lib/prompts";
 import {
+  loadBacklog,
   loadNotes,
   loadSettings,
   saveNotes,
   saveSettings,
 } from "@/lib/storage";
-import { AdminSettings, NourieNotes } from "@/lib/types";
+import { AdminSettings, BacklogItem, NourieNotes } from "@/lib/types";
 
 export default function AdminPage() {
   const [settings, setSettings] = useState<AdminSettings | null>(null);
   const [notes, setNotes] = useState<NourieNotes | null>(null);
+  const [backlog, setBacklog] = useState<BacklogItem[]>([]);
   const [surpriseDraft, setSurpriseDraft] = useState("");
   const [savedFlash, setSavedFlash] = useState("");
 
   useEffect(() => {
     setSettings(loadSettings());
     setNotes(loadNotes());
+    setBacklog(loadBacklog());
   }, []);
 
   if (!settings || !notes) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#FFF8EF]">
-        <SunLogo className="size-12" />
+      <div className="sunshine-shell relative flex min-h-screen items-center justify-center">
+        <BowField />
+        <SunLogo className="relative z-10 size-12" />
       </div>
     );
   }
@@ -50,33 +56,36 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF8EF] text-[#1B1028]">
-      <header className="flex items-center justify-between border-b border-[#CDB4E8]/50 px-6 py-4">
+    <div className="sunshine-shell relative min-h-screen text-[#3D2463]">
+      <BowField />
+      <header className="sunshine-panel relative z-10 flex items-center justify-between border-b border-[#D4B8E8] px-6 py-4">
         <div className="flex items-center gap-3">
           <SunLogo className="size-10" />
           <div>
-            <h1 className="text-xl font-semibold text-[#5C2D91]">Admin</h1>
-            <p className="text-xs text-[#1B1028]/60">Sunshine settings</p>
+            <h1 className="text-xl font-semibold text-[#7B4B9A]">Admin</h1>
+            <p className="text-xs text-[#3D2463]/60">Sunshine settings</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {savedFlash ? (
-            <span className="text-xs text-[#5C2D91]">{savedFlash}</span>
+            <span className="text-xs text-[#7B4B9A]">{savedFlash}</span>
           ) : null}
           <Link
             href="/"
-            className="rounded-full bg-[#5C2D91] px-4 py-2 text-sm text-[#FFF8EF]"
+            className="rounded-full bg-[#F2C14E] px-4 py-2 text-sm text-[#3D2463]"
           >
             Back to chat
           </Link>
         </div>
       </header>
 
-      <main className="mx-auto grid max-w-3xl gap-8 px-6 py-8">
-        <section className="rounded-3xl border border-[#CDB4E8] bg-white/70 p-5 shadow-sm">
-          <Label className="text-[#5C2D91]">System prompt</Label>
+      <main className="relative z-10 mx-auto grid max-w-3xl gap-8 px-6 py-8">
+        <BacklogPanel items={backlog} onChange={setBacklog} />
+
+        <section className="sunshine-panel rounded-3xl border border-[#D4B8E8] p-5 shadow-sm">
+          <Label className="text-[#7B4B9A]">System prompt</Label>
           <Textarea
-            className="mt-2 min-h-48 rounded-2xl border-[#CDB4E8]"
+            className="mt-2 min-h-48 rounded-2xl border-[#D4B8E8] bg-[#FAF4FF]/90"
             value={settings.systemPrompt}
             onChange={(e) =>
               setSettings({ ...settings, systemPrompt: e.target.value })
@@ -85,7 +94,7 @@ export default function AdminPage() {
           <div className="mt-3 flex flex-wrap gap-2">
             <Button
               type="button"
-              className="rounded-full bg-[#5C2D91] text-[#FFF8EF]"
+              className="rounded-full bg-[#9B6BC0] text-[#FFFDF8]"
               onClick={() => persistSettings(settings)}
             >
               Save prompt
@@ -93,7 +102,7 @@ export default function AdminPage() {
             <Button
               type="button"
               variant="outline"
-              className="rounded-full border-[#CDB4E8]"
+              className="rounded-full border-[#F2C14E]"
               onClick={() =>
                 persistSettings({
                   ...settings,
@@ -106,21 +115,21 @@ export default function AdminPage() {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-[#CDB4E8] bg-white/70 p-5 shadow-sm">
-          <Label className="text-[#5C2D91]">Mistral API key</Label>
+        <section className="sunshine-panel rounded-3xl border border-[#D4B8E8] p-5 shadow-sm">
+          <Label className="text-[#7B4B9A]">Mistral API key</Label>
           <Input
             type="password"
-            className="mt-2 rounded-2xl border-[#CDB4E8]"
+            className="mt-2 rounded-2xl border-[#D4B8E8] bg-[#FAF4FF]/90"
             value={settings.mistralApiKey}
             onChange={(e) =>
               setSettings({ ...settings, mistralApiKey: e.target.value })
             }
-            placeholder="Leaves blank to use server MISTRAL_API_KEY"
+            placeholder="Leave blank to use server MISTRAL_API_KEY"
           />
           <div className="mt-3 flex gap-2">
             <Button
               type="button"
-              className="rounded-full bg-[#5C2D91] text-[#FFF8EF]"
+              className="rounded-full bg-[#9B6BC0] text-[#FFFDF8]"
               onClick={() => persistSettings(settings)}
             >
               Save key
@@ -128,7 +137,7 @@ export default function AdminPage() {
             <Button
               type="button"
               variant="outline"
-              className="rounded-full border-[#CDB4E8]"
+              className="rounded-full border-[#F2C14E]"
               onClick={() =>
                 persistSettings({ ...settings, mistralApiKey: "" })
               }
@@ -138,8 +147,8 @@ export default function AdminPage() {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-[#CDB4E8] bg-white/70 p-5 shadow-sm">
-          <h2 className="mb-3 font-semibold text-[#5C2D91]">
+        <section className="sunshine-panel rounded-3xl border border-[#D4B8E8] p-5 shadow-sm">
+          <h2 className="mb-3 font-semibold text-[#7B4B9A]">
             Memory about Nourie
           </h2>
           {(
@@ -156,7 +165,7 @@ export default function AdminPage() {
             <label key={key} className="mb-3 block text-xs font-medium">
               {label}
               <Textarea
-                className="mt-1 min-h-16 rounded-xl border-[#CDB4E8]"
+                className="mt-1 min-h-16 rounded-xl border-[#D4B8E8] bg-[#FAF4FF]/90"
                 value={notes[key]}
                 onChange={(e) =>
                   setNotes({ ...notes, [key]: e.target.value })
@@ -166,7 +175,7 @@ export default function AdminPage() {
           ))}
           <Button
             type="button"
-            className="rounded-full bg-[#5C2D91] text-[#FFF8EF]"
+            className="rounded-full bg-[#9B6BC0] text-[#FFFDF8]"
             onClick={() =>
               persistNotes({
                 ...notes,
@@ -178,9 +187,9 @@ export default function AdminPage() {
           </Button>
         </section>
 
-        <section className="rounded-3xl border border-[#CDB4E8] bg-white/70 p-5 shadow-sm">
-          <h2 className="mb-2 font-semibold text-[#5C2D91]">Surprise lines</h2>
-          <p className="mb-3 text-xs text-[#1B1028]/60">
+        <section className="sunshine-panel rounded-3xl border border-[#D4B8E8] p-5 shadow-sm">
+          <h2 className="mb-2 font-semibold text-[#7B4B9A]">Surprise lines</h2>
+          <p className="mb-3 text-xs text-[#3D2463]/60">
             One random line appears once each visit for three seconds. Water
             reminders stay every 30 minutes.
           </p>
@@ -188,12 +197,12 @@ export default function AdminPage() {
             {settings.surpriseLines.map((line, i) => (
               <li
                 key={`${line}-${i}`}
-                className="flex items-center justify-between gap-2 rounded-xl bg-[#CDB4E8]/25 px-3 py-2 text-sm"
+                className="flex items-center justify-between gap-2 rounded-xl bg-[#E8D5F5]/70 px-3 py-2 text-sm"
               >
                 <span>{line}</span>
                 <button
                   type="button"
-                  className="text-xs text-[#5C2D91]"
+                  className="text-xs text-[#7B4B9A]"
                   onClick={() =>
                     persistSettings({
                       ...settings,
@@ -213,11 +222,11 @@ export default function AdminPage() {
               value={surpriseDraft}
               onChange={(e) => setSurpriseDraft(e.target.value)}
               placeholder="Add a short surprise line"
-              className="rounded-2xl border-[#CDB4E8]"
+              className="rounded-2xl border-[#D4B8E8] bg-[#FAF4FF]/90"
             />
             <Button
               type="button"
-              className="rounded-full bg-[#5C2D91] text-[#FFF8EF]"
+              className="rounded-full bg-[#F2C14E] text-[#3D2463]"
               onClick={() => {
                 if (!surpriseDraft.trim()) return;
                 persistSettings({
@@ -235,18 +244,12 @@ export default function AdminPage() {
             <Button
               type="button"
               variant="outline"
-              className="rounded-full border-[#F3B6C8]"
+              className="rounded-full border-[#9B6BC0]"
               onClick={() => {
                 const lines = settings.surpriseLines.filter((l) => l.trim());
                 const pick =
                   lines[Math.floor(Math.random() * Math.max(lines.length, 1))] ||
                   "You are doing beautifully, princess.";
-                window.dispatchEvent(
-                  new CustomEvent("sunshine:preview-surprise", {
-                    detail: pick,
-                  })
-                );
-                // Preview works on chat page — open chat if needed
                 window.location.href = `/?previewSurprise=${encodeURIComponent(pick)}`;
               }}
             >

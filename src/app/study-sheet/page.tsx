@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { BowField } from "@/components/bow-pattern";
 import { SunLogo } from "@/components/sun-logo";
 import { Button } from "@/components/ui/button";
 import {
@@ -83,8 +84,9 @@ export default function StudySheetPage() {
 
   if (!notes) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#FFF8EF]">
-        <SunLogo className="size-12" />
+      <div className="sunshine-shell relative flex min-h-screen items-center justify-center">
+        <BowField />
+        <SunLogo className="relative z-10 size-12" />
       </div>
     );
   }
@@ -97,24 +99,25 @@ export default function StudySheetPage() {
     .find((m) => m.diagram)?.diagram;
 
   return (
-    <div className="min-h-screen bg-[#FFF8EF] text-[#1B1028] print:bg-white">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#CDB4E8]/50 px-6 py-4 print:hidden">
+    <div className="sunshine-shell relative min-h-screen text-[#3D2463] print:bg-white">
+      <BowField className="print:hidden" />
+      <header className="sunshine-panel relative z-10 flex flex-wrap items-center justify-between gap-3 border-b border-[#D4B8E8] px-6 py-4 print:hidden">
         <div className="flex items-center gap-3">
           <SunLogo className="size-10" />
-          <h1 className="text-xl font-semibold text-[#5C2D91]">Study sheet</h1>
+          <h1 className="text-xl font-semibold text-[#7B4B9A]">Study sheet</h1>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
             type="button"
             variant="outline"
-            className="rounded-full border-[#CDB4E8]"
+            className="rounded-full border-[#D4B8E8]"
             onClick={() => window.print()}
           >
             Print / Save PDF
           </Button>
           <Button
             type="button"
-            className="rounded-full bg-[#5C2D91] text-[#FFF8EF]"
+            className="rounded-full bg-[#9B6BC0] text-[#FFFDF8]"
             onClick={() => void connectGoodNotes()}
           >
             {goodnotes ? "Reconnect GoodNotes" : "Connect GoodNotes"}
@@ -123,7 +126,7 @@ export default function StudySheetPage() {
             <Button
               type="button"
               variant="outline"
-              className="rounded-full border-[#F3B6C8]"
+              className="rounded-full border-[#F2C14E]"
               onClick={() => void sendToGoodNotes()}
             >
               Send to GoodNotes
@@ -131,7 +134,7 @@ export default function StudySheetPage() {
           ) : null}
           <Link
             href="/"
-            className="rounded-full bg-[#F3B6C8] px-4 py-2 text-sm text-[#1B1028]"
+            className="rounded-full bg-[#F2C14E] px-4 py-2 text-sm text-[#3D2463]"
           >
             Back to chat
           </Link>
@@ -139,29 +142,29 @@ export default function StudySheetPage() {
       </header>
 
       {connectMsg ? (
-        <p className="px-6 pt-4 text-sm text-[#5C2D91] print:hidden">
+        <p className="relative z-10 px-6 pt-4 text-sm text-[#7B4B9A] print:hidden">
           {connectMsg}
         </p>
       ) : null}
 
-      <article className="mx-auto max-w-2xl space-y-6 px-6 py-8">
+      <article className="relative z-10 mx-auto max-w-2xl space-y-6 px-6 py-8">
         <div className="flex items-center gap-3">
           <SunLogo className="size-12" />
           <div>
-            <h2 className="text-2xl font-semibold text-[#5C2D91]">Sunshine</h2>
-            <p className="text-sm text-[#1B1028]/70">
+            <h2 className="text-2xl font-semibold text-[#7B4B9A]">Sunshine</h2>
+            <p className="text-sm text-[#3D2463]/70">
               Study sheet for Nourie · Maria
             </p>
           </div>
         </div>
 
-        <pre className="whitespace-pre-wrap rounded-3xl border border-[#CDB4E8] bg-white/80 p-5 text-sm leading-relaxed">
+        <pre className="whitespace-pre-wrap rounded-3xl border border-[#D4B8E8] bg-[#FAF4FF]/90 p-5 text-sm leading-relaxed">
           {notesToDocument(notes)}
         </pre>
 
         {deck ? (
-          <section className="rounded-3xl border border-[#F2C14E]/50 bg-white/80 p-5">
-            <h3 className="mb-3 font-semibold text-[#5C2D91]">
+          <section className="rounded-3xl border border-[#F2C14E]/60 bg-[#FAF4FF]/90 p-5">
+            <h3 className="mb-3 font-semibold text-[#7B4B9A]">
               Slides · {deck.title}
             </h3>
             <ol className="list-decimal space-y-3 pl-5 text-sm">
@@ -176,11 +179,11 @@ export default function StudySheetPage() {
         ) : null}
 
         {diagram ? (
-          <section className="rounded-3xl border border-[#CDB4E8] bg-white/80 p-5">
-            <h3 className="mb-2 font-semibold text-[#5C2D91]">
+          <section className="rounded-3xl border border-[#D4B8E8] bg-[#FAF4FF]/90 p-5">
+            <h3 className="mb-2 font-semibold text-[#7B4B9A]">
               Visual · {diagram.title}
             </h3>
-            <pre className="whitespace-pre-wrap text-xs text-[#1B1028]/80">
+            <pre className="whitespace-pre-wrap text-xs text-[#3D2463]/80">
               {diagram.mermaid}
             </pre>
           </section>

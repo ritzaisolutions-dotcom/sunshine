@@ -8,7 +8,7 @@ export function LoadingDots() {
       {[0, 1, 2].map((i) => (
         <span
           key={i}
-          className="size-2 animate-bounce rounded-full bg-[#F3B6C8]"
+          className="size-2 animate-bounce rounded-full bg-[#F2C14E]"
           style={{ animationDelay: `${i * 120}ms` }}
         />
       ))}

@@ -1,5 +1,6 @@
 import {
   AdminSettings,
+  BacklogItem,
   ChatThread,
   EMPTY_NOTES,
   NourieNotes,
@@ -14,6 +15,7 @@ const KEYS = {
   waterAt: "sunshine.waterLastAt",
   surpriseVisit: "sunshine.surpriseVisitId",
   goodnotes: "sunshine.goodnotesConnected",
+  backlog: "sunshine.backlog",
 } as const;
 
 function canUseStorage(): boolean {
@@ -109,6 +111,41 @@ export function loadGoodnotesConnected(): boolean {
 
 export function saveGoodnotesConnected(value: boolean) {
   writeJson(KEYS.goodnotes, value);
+}
+
+export function loadBacklog(): BacklogItem[] {
+  return readJson<BacklogItem[]>(KEYS.backlog, []);
+}
+
+export function saveBacklog(items: BacklogItem[]) {
+  writeJson(KEYS.backlog, items);
+}
+
+/** Append wishes, skipping near-duplicate open items. */
+export function addBacklogWishes(
+  wishes: string[],
+  source: BacklogItem["source"] = "chat"
+): BacklogItem[] {
+  const existing = loadBacklog();
+  const next = [...existing];
+  for (const raw of wishes) {
+    const wish = raw.trim();
+    if (!wish) continue;
+    const normalized = wish.toLowerCase();
+    const duplicate = next.some(
+      (item) => !item.done && item.wish.toLowerCase() === normalized
+    );
+    if (duplicate) continue;
+    next.unshift({
+      id: crypto.randomUUID(),
+      wish,
+      createdAt: new Date().toISOString(),
+      source,
+      done: false,
+    });
+  }
+  saveBacklog(next);
+  return next;
 }
 
 export const WATER_INTERVAL_MS = 30 * 60 * 1000;

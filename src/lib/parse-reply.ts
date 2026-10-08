@@ -4,9 +4,13 @@ export type ParsedReply = {
   text: string;
   deck?: SlideDeck;
   diagram?: DiagramBlock;
+  backlogItems?: string[];
 };
 
-function extractFence(content: string, lang: string): { text: string; body: string | null } {
+function extractFence(
+  content: string,
+  lang: string
+): { text: string; body: string | null } {
   const re = new RegExp("```" + lang + "\\s*([\\s\\S]*?)```", "i");
   const match = content.match(re);
   if (!match) return { text: content, body: null };
@@ -18,6 +22,7 @@ export function parseAssistantReply(content: string): ParsedReply {
   let working = content;
   let deck: SlideDeck | undefined;
   let diagram: DiagramBlock | undefined;
+  let backlogItems: string[] | undefined;
 
   const slides = extractFence(working, "slides");
   working = slides.text;
@@ -41,5 +46,21 @@ export function parseAssistantReply(content: string): ParsedReply {
     }
   }
 
-  return { text: working.trim(), deck, diagram };
+  const backlog = extractFence(working, "backlog");
+  working = backlog.text;
+  if (backlog.body) {
+    try {
+      const parsed = JSON.parse(backlog.body) as { items?: unknown };
+      if (Array.isArray(parsed.items)) {
+        backlogItems = parsed.items
+          .filter((item): item is string => typeof item === "string")
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+    } catch {
+      /* keep prose */
+    }
+  }
+
+  return { text: working.trim(), deck, diagram, backlogItems };
 }

@@ -5,7 +5,10 @@ type SunLogoProps = {
   title?: string;
 };
 
-/** Red Tangled-inspired sun mark for Sunshine. Static SVG avoids hydration drift. */
+/**
+ * Tangled / entangled sun — gold rays with soft purple core glow.
+ * Static SVG paths avoid hydration drift.
+ */
 export function SunLogo({ className, title = "Sunshine" }: SunLogoProps) {
   return (
     <svg
@@ -16,22 +19,37 @@ export function SunLogo({ className, title = "Sunshine" }: SunLogoProps) {
       suppressHydrationWarning
     >
       <title>{title}</title>
-      <circle cx="32" cy="32" r="12" fill="#C41E3A" />
-      <g stroke="#C41E3A" strokeWidth="3.5" strokeLinecap="round">
-        <line x1="32" y1="4" x2="32" y2="16" />
-        <line x1="32" y1="48" x2="32" y2="60" />
-        <line x1="4" y1="32" x2="16" y2="32" />
-        <line x1="48" y1="32" x2="60" y2="32" />
-        <line x1="12.2" y1="12.2" x2="20.7" y2="20.7" />
-        <line x1="43.3" y1="43.3" x2="51.8" y2="51.8" />
-        <line x1="51.8" y1="12.2" x2="43.3" y2="20.7" />
-        <line x1="20.7" y1="43.3" x2="12.2" y2="51.8" />
-        <line x1="8.4" y1="22" x2="18.1" y2="25.6" />
-        <line x1="45.9" y1="38.4" x2="55.6" y2="42" />
-        <line x1="55.6" y1="22" x2="45.9" y2="25.6" />
-        <line x1="18.1" y1="38.4" x2="8.4" y2="42" />
+      <defs>
+        <radialGradient id="sunCore" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#FFE28A" />
+          <stop offset="55%" stopColor="#F2C14E" />
+          <stop offset="100%" stopColor="#E0A92E" />
+        </radialGradient>
+      </defs>
+      <circle cx="32" cy="32" r="11" fill="url(#sunCore)" />
+      <g stroke="#F2C14E" strokeWidth="3.2" strokeLinecap="round">
+        <line x1="32" y1="3" x2="32" y2="14" />
+        <line x1="32" y1="50" x2="32" y2="61" />
+        <line x1="3" y1="32" x2="14" y2="32" />
+        <line x1="50" y1="32" x2="61" y2="32" />
+        <line x1="11.5" y1="11.5" x2="19.5" y2="19.5" />
+        <line x1="44.5" y1="44.5" x2="52.5" y2="52.5" />
+        <line x1="52.5" y1="11.5" x2="44.5" y2="19.5" />
+        <line x1="19.5" y1="44.5" x2="11.5" y2="52.5" />
+        <line x1="7.8" y1="21.5" x2="17.2" y2="25.2" />
+        <line x1="46.8" y1="38.8" x2="56.2" y2="42.5" />
+        <line x1="56.2" y1="21.5" x2="46.8" y2="25.2" />
+        <line x1="17.2" y1="38.8" x2="7.8" y2="42.5" />
       </g>
-      <circle cx="32" cy="32" r="5" fill="#FFF8EF" opacity="0.35" />
+      {/* Soft entangled swirl in the center */}
+      <path
+        d="M28 30c2-3 6-3 8 0 1.5 2.2-.2 4.5-2.6 4.2-1.6-.2-2.6-1.4-2.4-2.8"
+        fill="none"
+        stroke="#9B6BC0"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+      <circle cx="32" cy="32" r="3.2" fill="#FFF6D6" opacity="0.85" />
     </svg>
   );
 }

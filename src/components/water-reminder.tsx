@@ -49,7 +49,6 @@ export function WaterReminder({
       }
     };
 
-    // Catch up when the tab was closed or hidden for 30+ minutes of real time.
     maybeShow();
     const onVisible = () => {
       if (document.visibilityState === "visible") maybeShow();
@@ -69,13 +68,13 @@ export function WaterReminder({
   if (!visible) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-[#1B1028]/35 p-4 animate-in fade-in duration-300">
-      <div className="flex max-w-sm flex-col items-center gap-3 rounded-3xl border border-[#F2C14E]/50 bg-[#FFF8EF] px-8 py-6 text-center shadow-2xl">
+    <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-[#9B6BC0]/30 p-4 animate-in fade-in duration-300">
+      <div className="flex max-w-sm flex-col items-center gap-3 rounded-3xl border border-[#F2C14E] bg-[#FAF4FF] px-8 py-6 text-center shadow-2xl">
         <SunLogo className="size-14" />
         <div className="text-4xl" aria-hidden>
           🧴
         </div>
-        <p className="text-lg font-medium text-[#5C2D91]">
+        <p className="text-lg font-medium text-[#7B4B9A]">
           Time for a sip of water
         </p>
       </div>

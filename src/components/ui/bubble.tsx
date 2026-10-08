@@ -20,11 +20,11 @@ const bubbleVariants = cva(
     variants: {
       variant: {
         default:
-          "*:data-[slot=bubble-content]:bg-[#5C2D91] *:data-[slot=bubble-content]:text-[#FFF8EF] [&>[data-slot=bubble-content]:is(button,a):hover]:bg-[#5C2D91]/90",
+          "*:data-[slot=bubble-content]:bg-[#9B6BC0] *:data-[slot=bubble-content]:text-[#FFFDF8] [&>[data-slot=bubble-content]:is(button,a):hover]:bg-[#8A5BB0]",
         secondary:
           "*:data-[slot=bubble-content]:bg-secondary *:data-[slot=bubble-content]:text-secondary-foreground [&>[data-slot=bubble-content]:is(button,a):hover]:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)]",
         muted:
-          "*:data-[slot=bubble-content]:bg-[color-mix(in_srgb,#CDB4E8_62%,#F3B6C8)] *:data-[slot=bubble-content]:text-[#1B1028] [&>[data-slot=bubble-content]:is(button,a):hover]:bg-[color-mix(in_srgb,#CDB4E8_72%,#F3B6C8)]",
+          "*:data-[slot=bubble-content]:bg-[#E8D5F5] *:data-[slot=bubble-content]:text-[#3D2463] [&>[data-slot=bubble-content]:is(button,a):hover]:bg-[#DFC8F0]",
         tinted:
           "*:data-[slot=bubble-content]:bg-[oklch(from_var(--primary)_0.93_calc(c*0.4)_h)] *:data-[slot=bubble-content]:text-foreground dark:*:data-[slot=bubble-content]:bg-[oklch(from_var(--primary)_0.3_calc(c*0.4)_h)] [&>[data-slot=bubble-content]:is(button,a):hover]:bg-[oklch(from_var(--primary)_0.88_calc(c*0.5)_h)] dark:[&>[data-slot=bubble-content]:is(button,a):hover]:bg-[oklch(from_var(--primary)_0.35_calc(c*0.5)_h)]",
         outline:

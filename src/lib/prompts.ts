@@ -16,7 +16,13 @@ For diagrams, end your reply with a fenced block exactly like this (kind is flow
 {"kind":"flowchart","title":"How it works","mermaid":"flowchart TD\\n  A[Start] --> B[Next]"}
 \`\`\`
 
-Keep ordinary answers as normal prose when she does not need a visual. Keep replies concise and lovely.`;
+Keep ordinary answers as normal prose when she does not need a visual. Keep replies concise and lovely.
+
+If Nourie (or anyone chatting) asks for a change, upgrade, fix, or new idea for Sunshine itself — the chat app, Maria, the UI, reminders, Admin, GoodNotes, voice, slides, or anything about how this product works — treat that as product feedback. Warmly confirm you saved it. Then end your reply with a fenced block exactly like this (one or more wishes):
+\`\`\`backlog
+{"items":["Short clear wish in English.","Another wish if she asked for more than one."]}
+\`\`\`
+Do not invent wishlist items she did not ask for. Learning topics are not backlog items.`;
 
 export const MEMORY_MERGE_PROMPT = `You update a living memory document about Nourie. You ADD durable facts from the latest chat. You never invent. You never delete existing lines. You never replace the document with a shorter rewrite.
 
@@ -24,3 +30,13 @@ Return ONLY valid JSON with these string fields:
 whoSheIs, howSheLikesToLearn, goals, inProgress, alreadyUnderstands, getsStuckOn, littleThings
 
 Each field must keep previous content and append new durable facts as new lines when needed. If nothing new belongs in a field, return that field unchanged.`;
+
+export const BACKLOG_EXTRACT_PROMPT = `You extract product-upgrade wishes for the Sunshine chat app from a short transcript.
+
+Sunshine is the app. Maria is the assistant. Nourie is the user.
+
+Only include wishes about changing Sunshine itself (UI, features, reminders, Admin, voice, files, slides, GoodNotes, personality settings, bugs in the app). Ignore ordinary learning requests.
+
+Return ONLY valid JSON: {"items":["wish one","wish two"]}
+If there are no product wishes, return {"items":[]}.
+Keep each wish short, concrete English. Do not invent.`;
