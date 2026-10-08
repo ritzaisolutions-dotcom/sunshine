@@ -68,13 +68,13 @@ export function WaterReminder({
   if (!visible) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-[#9B6BC0]/30 p-4 animate-in fade-in duration-300">
-      <div className="flex max-w-sm flex-col items-center gap-3 rounded-3xl border border-[#F2C14E] bg-[#FAF4FF] px-8 py-6 text-center shadow-2xl">
+    <div className="sunshine-overlay-motion pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-primary/30 p-4 animate-in fade-in duration-300">
+      <div className="flex max-w-sm flex-col items-center gap-3 rounded-3xl border border-accent bg-card px-8 py-6 text-center shadow-2xl">
         <SunLogo className="size-14" />
         <div className="text-4xl" aria-hidden>
           🧴
         </div>
-        <p className="text-lg font-medium text-[#7B4B9A]">
+        <p className="text-lg font-medium text-rapunzel-plum">
           Time for a sip of water
         </p>
       </div>

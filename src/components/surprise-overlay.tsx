@@ -69,10 +69,10 @@ export function SurpriseOverlay({
   if (!line) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center bg-[#F2C14E]/25 p-4 animate-in fade-in zoom-in-95 duration-300">
-      <div className="flex max-w-md flex-col items-center gap-3 rounded-3xl border border-[#F2C14E] bg-[#FAF4FF] px-8 py-6 text-center shadow-2xl">
+    <div className="sunshine-overlay-motion pointer-events-none fixed inset-0 z-[60] flex items-center justify-center bg-accent/25 p-4 animate-in fade-in zoom-in-95 duration-300">
+      <div className="flex max-w-md flex-col items-center gap-3 rounded-3xl border border-accent bg-card px-8 py-6 text-center shadow-2xl">
         <SunLogo className="size-12" />
-        <p className="text-lg font-medium leading-snug text-[#3D2463]">{line}</p>
+        <p className="text-lg font-medium leading-snug text-rapunzel-ink">{line}</p>
       </div>
     </div>
   );

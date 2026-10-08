@@ -131,14 +131,25 @@
   .animate-bounce {
     animation: none;
   }
+
+  .sunshine-overlay-motion {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .sunshine-shell {
-  background: linear-gradient(165deg, #f3eafb 0%, #ead8f6 45%, #e0c8f0 100%);
+  background: linear-gradient(
+    165deg,
+    var(--background) 0%,
+    color-mix(in srgb, var(--background) 55%, var(--muted)) 45%,
+    color-mix(in srgb, var(--muted) 70%, var(--primary)) 100%
+  );
 }
 
 .sunshine-panel {
-  background: color-mix(in srgb, #faf4ff 88%, transparent);
+  background: color-mix(in srgb, var(--card) 88%, transparent);
   backdrop-filter: blur(10px);
 }
 

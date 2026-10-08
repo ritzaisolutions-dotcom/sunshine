@@ -20,11 +20,11 @@ const bubbleVariants = cva(
     variants: {
       variant: {
         default:
-          "*:data-[slot=bubble-content]:bg-[#9B6BC0] *:data-[slot=bubble-content]:text-[#FFFDF8] [&>[data-slot=bubble-content]:is(button,a):hover]:bg-[#8A5BB0]",
+          "*:data-[slot=bubble-content]:bg-primary *:data-[slot=bubble-content]:text-primary-foreground [&>[data-slot=bubble-content]:is(button,a):hover]:bg-[color-mix(in_srgb,var(--primary),var(--foreground)_12%)]",
         secondary:
           "*:data-[slot=bubble-content]:bg-secondary *:data-[slot=bubble-content]:text-secondary-foreground [&>[data-slot=bubble-content]:is(button,a):hover]:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)]",
         muted:
-          "*:data-[slot=bubble-content]:bg-[#E8D5F5] *:data-[slot=bubble-content]:text-[#3D2463] [&>[data-slot=bubble-content]:is(button,a):hover]:bg-[#DFC8F0]",
+          "*:data-[slot=bubble-content]:bg-muted *:data-[slot=bubble-content]:text-rapunzel-ink [&>[data-slot=bubble-content]:is(button,a):hover]:bg-[color-mix(in_srgb,var(--muted),var(--foreground)_8%)]",
         tinted:
           "*:data-[slot=bubble-content]:bg-[oklch(from_var(--primary)_0.93_calc(c*0.4)_h)] *:data-[slot=bubble-content]:text-foreground dark:*:data-[slot=bubble-content]:bg-[oklch(from_var(--primary)_0.3_calc(c*0.4)_h)] [&>[data-slot=bubble-content]:is(button,a):hover]:bg-[oklch(from_var(--primary)_0.88_calc(c*0.5)_h)] dark:[&>[data-slot=bubble-content]:is(button,a):hover]:bg-[oklch(from_var(--primary)_0.35_calc(c*0.5)_h)]",
         outline:
@@ -71,7 +71,7 @@ function BubbleContent({
     props: mergeProps<"div">(
       {
         className: cn(
-          "w-fit max-w-full min-w-0 overflow-hidden rounded-2xl border border-transparent px-3 py-2 text-sm leading-relaxed wrap-break-word group-data-[align=end]/bubble:self-end [button]:text-left [button,a]:transition-colors [button,a]:outline-none [button,a]:focus-visible:border-[#F2C14E] [button,a]:focus-visible:ring-3 [button,a]:focus-visible:ring-[#F2C14E]/40",
+          "w-fit max-w-full min-w-0 overflow-hidden rounded-2xl border border-transparent px-3 py-2 text-sm leading-relaxed wrap-break-word group-data-[align=end]/bubble:self-end [button]:text-left [button,a]:transition-colors [button,a]:outline-none [button,a]:focus-visible:border-accent [button,a]:focus-visible:ring-3 [button,a]:focus-visible:ring-accent/40",
           className
         ),
       },

@@ -75,23 +75,23 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="sunshine-shell relative min-h-screen text-[#3D2463]">
+    <div className="sunshine-shell relative min-h-screen text-rapunzel-ink">
       <BowField />
-      <header className="sunshine-panel relative z-10 flex items-center justify-between border-b border-[#D4B8E8] px-6 py-4">
+      <header className="sunshine-panel relative z-10 flex items-center justify-between border-b border-border px-6 py-4">
         <div className="flex items-center gap-3">
           <SunLogo className="size-10" />
           <div>
-            <h1 className="text-xl font-semibold text-[#7B4B9A]">Admin</h1>
-            <p className="text-xs text-[#3D2463]/60">Sunshine settings</p>
+            <h1 className="text-xl font-semibold text-rapunzel-plum">Admin</h1>
+            <p className="text-xs text-rapunzel-ink/60">Sunshine settings</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {savedFlash ? (
-            <span className="text-xs text-[#7B4B9A]">{savedFlash}</span>
+            <span className="text-xs text-rapunzel-plum">{savedFlash}</span>
           ) : null}
           <Link
             href="/"
-            className="rounded-full bg-[#F2C14E] px-4 py-2 text-sm text-[#3D2463]"
+            className="rounded-full bg-rapunzel-gold px-4 py-2 text-sm text-rapunzel-ink"
           >
             Back to chat
           </Link>
@@ -101,10 +101,10 @@ export default function AdminPage() {
       <main className="relative z-10 mx-auto grid max-w-3xl gap-8 px-6 py-8">
         <BacklogPanel items={backlog} onChange={setBacklog} />
 
-        <section className="sunshine-panel rounded-3xl border border-[#D4B8E8] p-5 shadow-sm">
-          <Label className="text-[#7B4B9A]">System prompt</Label>
+        <section className="sunshine-panel rounded-3xl border border-border p-5 shadow-sm">
+          <Label className="text-rapunzel-plum">System prompt</Label>
           <Textarea
-            className="mt-2 min-h-48 rounded-2xl border-[#D4B8E8] bg-[#FAF4FF]/90"
+            className="mt-2 min-h-48 rounded-2xl border-border bg-card/90"
             value={settings.systemPrompt}
             onChange={(e) =>
               setSettings({ ...settings, systemPrompt: e.target.value })
@@ -113,7 +113,7 @@ export default function AdminPage() {
           <div className="mt-3 flex flex-wrap gap-2">
             <Button
               type="button"
-              className="rounded-full bg-[#9B6BC0] text-[#FFFDF8]"
+              className="rounded-full bg-primary text-primary-foreground"
               onClick={() => persistSettings(settings)}
             >
               Save prompt
@@ -121,7 +121,7 @@ export default function AdminPage() {
             <Button
               type="button"
               variant="outline"
-              className="rounded-full border-[#F2C14E]"
+              className="rounded-full border-rapunzel-gold"
               onClick={() =>
                 persistSettings({
                   ...settings,
@@ -129,16 +129,16 @@ export default function AdminPage() {
                 })
               }
             >
-              Reset to Maria Sunshine default
+              Reset to Maria Sunshine
             </Button>
           </div>
         </section>
 
-        <section className="sunshine-panel rounded-3xl border border-[#D4B8E8] p-5 shadow-sm">
-          <Label className="text-[#7B4B9A]">Mistral API key</Label>
+        <section className="sunshine-panel rounded-3xl border border-border p-5 shadow-sm">
+          <Label className="text-rapunzel-plum">Mistral API key</Label>
           <Input
             type="password"
-            className="mt-2 rounded-2xl border-[#D4B8E8] bg-[#FAF4FF]/90"
+            className="mt-2 rounded-2xl border-border bg-card/90"
             value={settings.mistralApiKey}
             onChange={(e) =>
               setSettings({ ...settings, mistralApiKey: e.target.value })
@@ -148,7 +148,7 @@ export default function AdminPage() {
           <div className="mt-3 flex gap-2">
             <Button
               type="button"
-              className="rounded-full bg-[#9B6BC0] text-[#FFFDF8]"
+              className="rounded-full bg-primary text-primary-foreground"
               onClick={() => persistSettings(settings)}
             >
               Save key
@@ -156,7 +156,7 @@ export default function AdminPage() {
             <Button
               type="button"
               variant="outline"
-              className="rounded-full border-[#F2C14E]"
+              className="rounded-full border-rapunzel-gold"
               onClick={() =>
                 persistSettings({ ...settings, mistralApiKey: "" })
               }
@@ -166,8 +166,8 @@ export default function AdminPage() {
           </div>
         </section>
 
-        <section className="sunshine-panel rounded-3xl border border-[#D4B8E8] p-5 shadow-sm">
-          <h2 className="mb-3 font-semibold text-[#7B4B9A]">
+        <section className="sunshine-panel rounded-3xl border border-border p-5 shadow-sm">
+          <h2 className="mb-3 font-semibold text-rapunzel-plum">
             Memory about Noorie
           </h2>
           {(
@@ -184,7 +184,7 @@ export default function AdminPage() {
             <label key={key} className="mb-3 block text-xs font-medium">
               {label}
               <Textarea
-                className="mt-1 min-h-16 rounded-xl border-[#D4B8E8] bg-[#FAF4FF]/90"
+                className="mt-1 min-h-16 rounded-xl border-border bg-card/90"
                 value={notes[key]}
                 onChange={(e) =>
                   setNotes({ ...notes, [key]: e.target.value })
@@ -194,7 +194,7 @@ export default function AdminPage() {
           ))}
           <Button
             type="button"
-            className="rounded-full bg-[#9B6BC0] text-[#FFFDF8]"
+            className="rounded-full bg-primary text-primary-foreground"
             onClick={() =>
               persistNotes({
                 ...notes,
@@ -206,9 +206,9 @@ export default function AdminPage() {
           </Button>
         </section>
 
-        <section className="sunshine-panel rounded-3xl border border-[#D4B8E8] p-5 shadow-sm">
-          <h2 className="mb-2 font-semibold text-[#7B4B9A]">Surprise lines</h2>
-          <p className="mb-3 text-xs text-[#3D2463]/60">
+        <section className="sunshine-panel rounded-3xl border border-border p-5 shadow-sm">
+          <h2 className="mb-2 font-semibold text-rapunzel-plum">Surprise lines</h2>
+          <p className="mb-3 text-xs text-rapunzel-ink/60">
             One random line appears once each visit for three seconds. Water
             reminders stay every 30 minutes.
           </p>
@@ -216,12 +216,12 @@ export default function AdminPage() {
             {settings.surpriseLines.map((line, i) => (
               <li
                 key={`${line}-${i}`}
-                className="flex items-center justify-between gap-2 rounded-xl bg-[#E8D5F5]/70 px-3 py-2 text-sm"
+                className="flex items-center justify-between gap-2 rounded-xl bg-muted/70 px-3 py-2 text-sm"
               >
                 <span>{line}</span>
                 <button
                   type="button"
-                  className="text-xs text-[#7B4B9A]"
+                  className="text-xs text-rapunzel-plum"
                   onClick={() =>
                     persistSettings({
                       ...settings,
@@ -241,11 +241,11 @@ export default function AdminPage() {
               value={surpriseDraft}
               onChange={(e) => setSurpriseDraft(e.target.value)}
               placeholder="Add a short surprise line"
-              className="rounded-2xl border-[#D4B8E8] bg-[#FAF4FF]/90"
+              className="rounded-2xl border-border bg-card/90"
             />
             <Button
               type="button"
-              className="rounded-full bg-[#F2C14E] text-[#3D2463]"
+              className="rounded-full bg-rapunzel-gold text-rapunzel-ink"
               onClick={() => {
                 if (!surpriseDraft.trim()) return;
                 persistSettings({
@@ -263,7 +263,7 @@ export default function AdminPage() {
             <Button
               type="button"
               variant="outline"
-              className="rounded-full border-[#9B6BC0]"
+              className="rounded-full border-primary"
               onClick={() => {
                 const lines = settings.surpriseLines.filter((l) => l.trim());
                 const pick =

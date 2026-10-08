@@ -11,7 +11,6 @@ import {
   Paperclip,
   Plus,
   Send,
-  Settings2,
   X,
 } from "lucide-react";
 import { BowField } from "@/components/bow-pattern";
@@ -166,6 +165,10 @@ export function SunshineApp() {
   const active = useMemo(
     () => chats.find((c) => c.id === activeId) ?? null,
     [chats, activeId]
+  );
+
+  const hasUserMessage = Boolean(
+    active?.messages.some((m) => m.role === "user")
   );
 
   const activeChats = chats.filter((c) => !c.archived);
@@ -423,7 +426,7 @@ export function SunshineApp() {
 
   if (!ready) {
     return (
-      <div className="sunshine-shell relative flex min-h-screen items-center justify-center text-[#3D2463]">
+      <div className="sunshine-shell relative flex min-h-screen items-center justify-center text-rapunzel-ink">
         <BowField />
         <div className="relative z-10 flex flex-col items-center gap-3">
           <SunLogo className="size-16" />
@@ -434,28 +437,28 @@ export function SunshineApp() {
   }
 
   const Sidebar = (
-    <aside className="relative flex h-full w-72 flex-col overflow-hidden border-r border-[#E4D0F2] bg-[#F7F1FC] text-[#3D2463]">
+    <aside className="relative flex h-full w-72 flex-col overflow-hidden border-r border-input bg-rapunzel-soft text-rapunzel-ink">
       <div className="relative z-10 flex items-center gap-3 px-5 py-6">
         <SunLogo className="size-11" />
         <div>
-          <p className="font-[family-name:var(--font-fraunces)] text-2xl font-medium tracking-tight text-[#7B4B9A]">
+          <p className="font-[family-name:var(--font-fraunces)] text-2xl font-medium tracking-tight text-rapunzel-plum">
             Sunshine
           </p>
-          <p className="text-xs text-[#7B4B9A]/75">Maria Sunshine for Noorie</p>
+          <p className="text-xs text-rapunzel-plum/75">Maria Sunshine for Noorie</p>
         </div>
       </div>
       <div className="relative z-10 px-3">
         <Button
           type="button"
           onClick={startNewChat}
-          className="w-full rounded-2xl bg-[#F2C14E] text-[#3D2463] hover:bg-[#E8B84A]"
+          className="w-full rounded-2xl bg-rapunzel-gold text-rapunzel-ink hover:bg-rapunzel-gold-deep"
         >
           <Plus className="size-4" />
           New chat
         </Button>
       </div>
       <div className="relative z-10 mt-4 flex-1 space-y-1 overflow-y-auto px-2 pb-4">
-        <p className="px-2 text-[10px] uppercase tracking-widest text-[#7B4B9A]/70">
+        <p className="px-2 text-[10px] uppercase tracking-widest text-rapunzel-plum/70">
           Chats
         </p>
         {activeChats.map((chat) => (
@@ -463,7 +466,7 @@ export function SunshineApp() {
             key={chat.id}
             className={cn(
               "flex items-center gap-1 rounded-xl pr-1",
-              chat.id === activeId ? "bg-[#F2C14E]/70" : "hover:bg-white"
+              chat.id === activeId ? "bg-rapunzel-gold/70" : "hover:bg-white"
             )}
           >
             <button
@@ -472,7 +475,7 @@ export function SunshineApp() {
                 setActiveId(chat.id);
                 setSidebarOpen(false);
               }}
-              className="min-w-0 flex-1 truncate px-3 py-2 text-left text-sm text-[#3D2463]"
+              className="min-w-0 flex-1 truncate px-3 py-2 text-left text-sm text-rapunzel-ink"
             >
               {chat.title}
             </button>
@@ -480,7 +483,7 @@ export function SunshineApp() {
               type="button"
               aria-label={`Put away ${chat.title}`}
               onClick={() => archiveChat(chat.id)}
-              className="grid size-8 place-items-center rounded-lg text-[#7B4B9A] hover:bg-white/70"
+              className="grid size-8 place-items-center rounded-lg text-rapunzel-plum hover:bg-white/70"
             >
               <Archive className="size-3.5" />
             </button>
@@ -488,7 +491,7 @@ export function SunshineApp() {
         ))}
         {archivedChats.length > 0 && (
           <>
-            <p className="mt-4 px-2 text-[10px] uppercase tracking-widest text-[#7B4B9A]/70">
+            <p className="mt-4 px-2 text-[10px] uppercase tracking-widest text-rapunzel-plum/70">
               Put away
             </p>
             {archivedChats.map((chat) => (
@@ -500,8 +503,8 @@ export function SunshineApp() {
                   setSidebarOpen(false);
                 }}
                 className={cn(
-                  "w-full truncate rounded-xl px-3 py-2 text-left text-sm text-[#7B4B9A]/85 hover:bg-white/40",
-                  chat.id === activeId && "bg-[#F2C14E]/50 text-[#3D2463]"
+                  "w-full truncate rounded-xl px-3 py-2 text-left text-sm text-rapunzel-plum/85 hover:bg-white/40",
+                  chat.id === activeId && "bg-rapunzel-gold/50 text-rapunzel-ink"
                 )}
               >
                 {chat.title}
@@ -510,11 +513,11 @@ export function SunshineApp() {
           </>
         )}
       </div>
-      <div className="relative z-10 space-y-1 border-t border-[#D4B8E8] p-3">
+      <div className="relative z-10 space-y-1 border-t border-border p-3">
         <Button
           type="button"
           variant="ghost"
-          className="w-full justify-start text-[#3D2463] hover:bg-white/50"
+          className="w-full justify-start text-rapunzel-ink hover:bg-white/50"
           onClick={() => {
             setShowNotes((v) => !v);
             setSidebarOpen(false);
@@ -523,17 +526,10 @@ export function SunshineApp() {
           About Noorie
         </Button>
         <Link
-          href="/admin"
-          className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-[#3D2463] hover:bg-white/50"
-        >
-          <Settings2 className="size-4 text-[#F2C14E]" />
-          Admin
-        </Link>
-        <Link
           href="/study-sheet"
-          className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-[#3D2463] hover:bg-white/50"
+          className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-rapunzel-ink hover:bg-white/50"
         >
-          <FileText className="size-4 text-[#F2C14E]" />
+          <FileText className="size-4 text-rapunzel-gold" />
           Study sheet
         </Link>
       </div>
@@ -541,7 +537,7 @@ export function SunshineApp() {
   );
 
   return (
-    <div className="sunshine-shell relative flex min-h-screen text-[#3D2463]">
+    <div className="sunshine-shell relative flex min-h-screen text-rapunzel-ink">
       <BowField />
       <div className="relative z-10 hidden md:block">{Sidebar}</div>
 
@@ -549,7 +545,7 @@ export function SunshineApp() {
         <div className="fixed inset-0 z-40 flex md:hidden">
           <button
             type="button"
-            className="absolute inset-0 bg-[#7B4B9A]/35"
+            className="absolute inset-0 bg-rapunzel-plum/35"
             aria-label="Close menu"
             onClick={() => setSidebarOpen(false)}
           />
@@ -557,8 +553,8 @@ export function SunshineApp() {
         </div>
       )}
 
-      <main className="relative z-10 m-3 flex min-w-0 flex-1 flex-col overflow-hidden rounded-[1.75rem] border border-white/80 bg-[#FAF4FF]/72 shadow-[0_20px_60px_-36px_rgba(123,75,154,0.7)]">
-        <header className="flex items-center justify-between border-b border-[#E4D0F2] px-4 py-3">
+      <main className="relative z-10 m-3 flex min-w-0 flex-1 flex-col overflow-hidden rounded-[1.75rem] border border-white/80 bg-card/72 shadow-[0_20px_60px_-36px_color-mix(in_srgb,var(--primary)_55%,transparent)]">
+        <header className="flex items-center justify-between border-b border-input px-4 py-3">
           <div className="flex items-center gap-3">
             <Button
               type="button"
@@ -571,17 +567,17 @@ export function SunshineApp() {
             </Button>
             <SunLogo className="size-8 md:hidden" />
             <div>
-              <p className="font-[family-name:var(--font-fraunces)] text-lg font-medium text-[#7B4B9A]">
+              <p className="font-[family-name:var(--font-fraunces)] text-lg font-medium text-rapunzel-plum">
                 {active?.title ?? "Sunshine"}
               </p>
-              <p className="text-xs text-[#3D2463]/60">Chat with Maria Sunshine</p>
+              <p className="text-xs text-rapunzel-ink/60">Chat with Maria Sunshine</p>
             </div>
           </div>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="rounded-full border-[#F2C14E] bg-[#F2C14E]/25 text-[#3D2463] hover:bg-[#F2C14E]/40"
+            className="rounded-full border-rapunzel-gold bg-rapunzel-gold/25 text-rapunzel-ink hover:bg-rapunzel-gold/40"
             onClick={() => setShowNotes((v) => !v)}
           >
             {showNotes ? "Hide notes" : "About Noorie"}
@@ -590,98 +586,98 @@ export function SunshineApp() {
 
         <div className="flex min-h-0 flex-1">
           <section className="flex min-w-0 flex-1 flex-col">
-            <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 overflow-y-auto px-4 py-8 md:px-6">
-              {!active?.messages.length && (
-                <div className="mx-auto mt-16 max-w-md text-center">
+            <div
+              className={cn(
+                "mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 overflow-y-auto px-4 py-8 md:px-6",
+                !hasUserMessage && "justify-center"
+              )}
+            >
+              {!hasUserMessage ? (
+                <div className="mx-auto max-w-md text-center">
                   <SunLogo className="mx-auto size-16" />
-                  <h1 className="mt-4 font-[family-name:var(--font-fraunces)] text-4xl font-medium text-[#7B4B9A]">
+                  <h1 className="mt-4 font-[family-name:var(--font-fraunces)] text-4xl font-medium text-rapunzel-plum">
                     Sunshine
                   </h1>
-                  <p className="mt-2 text-sm text-[#3D2463]/70">
-                    Say hello to Maria Sunshine. She is ready when you are.
+                  <p className="mt-3 text-base leading-relaxed text-rapunzel-ink">
+                    Hi Noorie — I&apos;m Maria Sunshine. What would you like to
+                    learn or work on today?
                   </p>
-                  <p className="mt-4 rounded-2xl border border-[#F2C14E]/70 bg-[#FAF4FF]/80 px-4 py-3 text-sm text-[#3D2463]">
-                    Want something changed in Sunshine? Just tell Maria Sunshine. She
-                    saves every wish in the upgrade backlog.
-                  </p>
+                  <div className="mt-6 flex flex-wrap justify-center gap-2">
+                    {[
+                      "Explain this in a simple way",
+                      "Make me slides",
+                      "Quiz me",
+                    ].map((idea) => (
+                      <button
+                        key={idea}
+                        type="button"
+                        onClick={() => setDraft(idea)}
+                        className="rounded-full border border-input bg-white/70 px-3 py-1.5 text-xs text-rapunzel-plum hover:bg-rapunzel-gold/40"
+                      >
+                        {idea}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              )}
-
-              {active && !active.messages.some((m) => m.role === "user") ? (
-                <div className="flex flex-wrap justify-center gap-2">
-                  {[
-                    "Explain this in a simple way",
-                    "Make me slides",
-                    "Quiz me",
-                  ].map((idea) => (
-                    <button
-                      key={idea}
-                      type="button"
-                      onClick={() => setDraft(idea)}
-                      className="rounded-full border border-[#E4D0F2] bg-white/70 px-3 py-1.5 text-xs text-[#7B4B9A] hover:bg-[#F2C14E]/40"
-                    >
-                      {idea}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-
-              {active?.messages.map((message) => {
-                const isUser = message.role === "user";
-                return (
-                  <Message key={message.id} align={isUser ? "start" : "end"}>
-                    <MessageContent>
-                      {isUser ? (
-                        <MessageHeader className="gap-1.5">
-                          Noorie
-                          <span
-                            aria-hidden
-                            className="size-1 shrink-0 rounded-full bg-[#F2C14E]"
-                          />
-                          <span className="tabular-nums">
-                            {formatTime(message.createdAt)}
-                          </span>
-                        </MessageHeader>
-                      ) : (
-                        <MessageHeader className="gap-1.5 self-end">
-                          <SunLogo className="size-4" />
-                          Maria Sunshine
-                          <span className="tabular-nums font-normal">
-                            {formatTime(message.createdAt)}
-                          </span>
-                        </MessageHeader>
-                      )}
-                      <Bubble variant={isUser ? "muted" : "default"}>
-                        <BubbleContent>
-                          {message.content ||
-                            (sending && !isUser ? <LoadingDots /> : "")}
-                          {message.attachments?.length ? (
-                            <ul className="mt-2 space-y-1 text-xs opacity-90">
-                              {message.attachments.map((a) => (
-                                <li key={a.name}>📎 {a.name}</li>
-                              ))}
-                            </ul>
+              ) : (
+                <>
+                  {active?.messages.map((message) => {
+                    const isUser = message.role === "user";
+                    return (
+                      <Message key={message.id} align={isUser ? "start" : "end"}>
+                        <MessageContent>
+                          {isUser ? (
+                            <MessageHeader className="gap-1.5">
+                              Noorie
+                              <span
+                                aria-hidden
+                                className="size-1 shrink-0 rounded-full bg-rapunzel-gold"
+                              />
+                              <span className="tabular-nums">
+                                {formatTime(message.createdAt)}
+                              </span>
+                            </MessageHeader>
+                          ) : (
+                            <MessageHeader className="gap-1.5 self-end">
+                              <SunLogo className="size-4" />
+                              Maria Sunshine
+                              <span className="tabular-nums font-normal">
+                                {formatTime(message.createdAt)}
+                              </span>
+                            </MessageHeader>
+                          )}
+                          <Bubble variant={isUser ? "muted" : "default"}>
+                            <BubbleContent>
+                              {message.content ||
+                                (sending && !isUser ? <LoadingDots /> : "")}
+                              {message.attachments?.length ? (
+                                <ul className="mt-2 space-y-1 text-xs opacity-90">
+                                  {message.attachments.map((a) => (
+                                    <li key={a.name}>📎 {a.name}</li>
+                                  ))}
+                                </ul>
+                              ) : null}
+                            </BubbleContent>
+                          </Bubble>
+                          {message.deck ? (
+                            <SlideDeckView deck={message.deck} />
                           ) : null}
-                        </BubbleContent>
-                      </Bubble>
-                      {message.deck ? (
-                        <SlideDeckView deck={message.deck} />
-                      ) : null}
-                      {message.diagram ? (
-                        <DiagramView diagram={message.diagram} />
-                      ) : null}
-                      {!isUser &&
-                      message.status &&
-                      message.status !== "Ready" &&
-                      message.status !== "Done" ? (
-                        <MessageFooter>{message.status}</MessageFooter>
-                      ) : null}
-                    </MessageContent>
-                  </Message>
-                );
-              })}
-
-              <div ref={bottomRef} />
+                          {message.diagram ? (
+                            <DiagramView diagram={message.diagram} />
+                          ) : null}
+                          {!isUser &&
+                          message.status &&
+                          message.status !== "Ready" &&
+                          message.status !== "Done" ? (
+                            <MessageFooter>{message.status}</MessageFooter>
+                          ) : null}
+                        </MessageContent>
+                      </Message>
+                    );
+                  })}
+                  <div ref={bottomRef} />
+                </>
+              )}
             </div>
 
             {error ? (
@@ -693,7 +689,7 @@ export function SunshineApp() {
                 {pendingFiles.map((f) => (
                   <span
                     key={f.name + f.size}
-                    className="inline-flex items-center gap-1 rounded-full bg-[#E8D5F5] px-3 py-1 text-xs"
+                    className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs"
                   >
                     {f.name}
                     <button
@@ -712,7 +708,7 @@ export function SunshineApp() {
             )}
 
             <div className="px-4 pb-5 pt-2 md:px-6">
-              <div className="mx-auto flex w-full max-w-2xl items-end gap-2 rounded-[1.75rem] border border-[#E4D0F2] bg-[#FAF4FF] p-2 shadow-[0_12px_40px_-24px_rgba(123,75,154,0.65)]">
+              <div className="mx-auto flex w-full max-w-2xl items-end gap-2 rounded-[1.75rem] border border-input bg-card p-2 shadow-[0_12px_40px_-24px_color-mix(in_srgb,var(--primary)_45%,transparent)]">
                 <input
                   ref={fileRef}
                   type="file"
@@ -725,7 +721,7 @@ export function SunshineApp() {
                   type="button"
                   size="icon"
                   variant="ghost"
-                  className="rounded-full text-[#7B4B9A]"
+                  className="rounded-full text-rapunzel-plum"
                   onClick={() => fileRef.current?.click()}
                   title="Attach"
                 >
@@ -737,7 +733,7 @@ export function SunshineApp() {
                   variant="ghost"
                   className={cn(
                     "rounded-full",
-                    listening ? "text-[#C41E3A]" : "text-[#7B4B9A]"
+                    listening ? "text-destructive" : "text-rapunzel-plum"
                   )}
                   onClick={toggleMic}
                   title="Voice to text"
@@ -767,12 +763,12 @@ export function SunshineApp() {
                   aria-label="Send message"
                   disabled={sending}
                   onClick={() => void sendMessage()}
-                  className="rounded-full bg-[#F2C14E] text-[#3D2463] hover:bg-[#E8B84A]"
+                  className="rounded-full bg-rapunzel-gold text-rapunzel-ink hover:bg-rapunzel-gold-deep"
                 >
                   <Send className="size-4" />
                 </Button>
               </div>
-              <p className="mx-auto mt-2 max-w-2xl text-center text-[11px] text-[#7B4B9A]/80">
+              <p className="mx-auto mt-2 max-w-2xl text-center text-[11px] text-rapunzel-plum/80">
                 Tell Maria Sunshine if you want anything in Sunshine changed. She saves
                 it in the upgrade backlog.
               </p>
@@ -780,8 +776,8 @@ export function SunshineApp() {
           </section>
 
           {showNotes && (
-            <aside className="sunshine-panel w-full max-w-sm border-l border-[#D4B8E8] p-4 md:block">
-              <h2 className="mb-3 text-lg font-semibold text-[#7B4B9A]">
+            <aside className="sunshine-panel w-full max-w-sm border-l border-border p-4 md:block">
+              <h2 className="mb-3 text-lg font-semibold text-rapunzel-plum">
                 About Noorie
               </h2>
               <NotesEditor notes={notes} onChange={setNotes} />
@@ -811,12 +807,12 @@ function NotesEditor({
     key: keyof Omit<NourieNotes, "lastUpdated">,
     label: string
   ) => (
-    <label className="mb-3 block text-xs font-medium text-[#7B4B9A]">
+    <label className="mb-3 block text-xs font-medium text-rapunzel-plum">
       {label}
       <Textarea
         value={notes[key]}
         onChange={(e) => onChange({ ...notes, [key]: e.target.value })}
-        className="mt-1 min-h-16 rounded-xl border-[#D4B8E8] bg-[#FAF4FF]/90 text-sm"
+        className="mt-1 min-h-16 rounded-xl border-border bg-card/90 text-sm"
       />
     </label>
   );
@@ -824,7 +820,7 @@ function NotesEditor({
   return (
     <div className="max-h-[70vh] overflow-y-auto pr-1">
       {notes.lastUpdated ? (
-        <p className="mb-3 text-[11px] text-[#3D2463]/50">
+        <p className="mb-3 text-[11px] text-rapunzel-ink/50">
           Last updated: {new Date(notes.lastUpdated).toLocaleString()}
         </p>
       ) : null}
