@@ -459,34 +459,32 @@ export function SunshineApp() {
           Chats
         </p>
         {activeChats.map((chat) => (
-          <button
+          <div
             key={chat.id}
-            type="button"
-            onClick={() => {
-              setActiveId(chat.id);
-              setSidebarOpen(false);
-            }}
             className={cn(
-              "group flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm",
-              chat.id === activeId
-                ? "bg-[#F2C14E]/70 text-[#3D2463]"
-                : "text-[#3D2463] hover:bg-white"
+              "flex items-center gap-1 rounded-xl pr-1",
+              chat.id === activeId ? "bg-[#F2C14E]/70" : "hover:bg-white"
             )}
           >
-            <span className="truncate">{chat.title}</span>
-            <span
-              role="button"
-              tabIndex={0}
-              onClick={(e) => {
-                e.stopPropagation();
-                archiveChat(chat.id);
+            <button
+              type="button"
+              onClick={() => {
+                setActiveId(chat.id);
+                setSidebarOpen(false);
               }}
-              className="opacity-0 group-hover:opacity-100"
-              title="Put away"
+              className="min-w-0 flex-1 truncate px-3 py-2 text-left text-sm text-[#3D2463]"
+            >
+              {chat.title}
+            </button>
+            <button
+              type="button"
+              aria-label={`Put away ${chat.title}`}
+              onClick={() => archiveChat(chat.id)}
+              className="grid size-8 place-items-center rounded-lg text-[#7B4B9A] hover:bg-white/70"
             >
               <Archive className="size-3.5" />
-            </span>
-          </button>
+            </button>
+          </div>
         ))}
         {archivedChats.length > 0 && (
           <>
@@ -608,6 +606,25 @@ export function SunshineApp() {
                   </p>
                 </div>
               )}
+
+              {active && !active.messages.some((m) => m.role === "user") ? (
+                <div className="flex flex-wrap justify-center gap-2">
+                  {[
+                    "Explain this in a simple way",
+                    "Make me slides",
+                    "Quiz me",
+                  ].map((idea) => (
+                    <button
+                      key={idea}
+                      type="button"
+                      onClick={() => setDraft(idea)}
+                      className="rounded-full border border-[#E4D0F2] bg-white/70 px-3 py-1.5 text-xs text-[#7B4B9A] hover:bg-[#F2C14E]/40"
+                    >
+                      {idea}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
 
               {active?.messages.map((message) => {
                 const isUser = message.role === "user";
@@ -747,6 +764,7 @@ export function SunshineApp() {
                 <Button
                   type="button"
                   size="icon"
+                  aria-label="Send message"
                   disabled={sending}
                   onClick={() => void sendMessage()}
                   className="rounded-full bg-[#F2C14E] text-[#3D2463] hover:bg-[#E8B84A]"
