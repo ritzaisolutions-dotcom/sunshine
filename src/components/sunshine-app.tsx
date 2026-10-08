@@ -603,6 +603,10 @@ export function SunshineApp() {
                   <p className="mt-2 text-sm text-[#3D2463]/70">
                     Say hello to Maria. She is ready when you are.
                   </p>
+                  <p className="mt-4 rounded-2xl border border-[#F2C14E]/70 bg-[#FAF4FF]/80 px-4 py-3 text-sm text-[#3D2463]">
+                    Want something changed in Sunshine? Just tell Maria. She
+                    saves every wish in the upgrade backlog.
+                  </p>
                 </div>
               )}
 
@@ -681,6 +685,10 @@ export function SunshineApp() {
             )}
 
             <div className="sunshine-panel border-t border-[#D4B8E8] p-4 md:px-8">
+              <p className="mx-auto mb-2 max-w-3xl text-center text-xs text-[#7B4B9A]">
+                Tell Maria if you want anything in Sunshine upgraded. She keeps
+                a backlog of your wishes.
+              </p>
               <div className="mx-auto flex max-w-3xl items-end gap-2 rounded-3xl border border-[#D4B8E8] bg-[#FAF4FF]/90 p-2 shadow-sm">
                 <input
                   ref={fileRef}

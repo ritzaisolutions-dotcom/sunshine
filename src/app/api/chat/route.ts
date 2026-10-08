@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { DEFAULT_SYSTEM_PROMPT } from "@/lib/prompts";
+import { BACKLOG_RULE, DEFAULT_SYSTEM_PROMPT } from "@/lib/prompts";
 
 type IncomingAttachment = {
   name: string;
@@ -91,6 +91,7 @@ export async function POST(req: NextRequest) {
 
   const systemParts = [
     body.systemPrompt?.trim() || DEFAULT_SYSTEM_PROMPT,
+    `\n\n${BACKLOG_RULE}`,
     body.notesDocument
       ? `\n\nAbout Nourie (living memory — use this, do not invent):\n${body.notesDocument}`
       : "",

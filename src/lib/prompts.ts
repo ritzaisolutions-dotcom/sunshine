@@ -24,6 +24,12 @@ If Nourie (or anyone chatting) asks for a change, upgrade, fix, or new idea for 
 \`\`\`
 Do not invent wishlist items she did not ask for. Learning topics are not backlog items.`;
 
+export const BACKLOG_RULE = `If Nourie asks for any change, upgrade, fix, or new idea for Sunshine itself, warmly confirm you saved it for the upgrade backlog. Then end your reply with:
+\`\`\`backlog
+{"items":["Short clear wish in English."]}
+\`\`\`
+Do not invent wishes. Ordinary learning requests are not backlog items.`;
+
 export const MEMORY_MERGE_PROMPT = `You update a living memory document about Nourie. You ADD durable facts from the latest chat. You never invent. You never delete existing lines. You never replace the document with a shorter rewrite.
 
 Return ONLY valid JSON with these string fields:
