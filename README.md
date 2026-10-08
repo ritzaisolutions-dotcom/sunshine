@@ -1,6 +1,10 @@
 # Sunshine
 
-Girlie English chat where **Maria** helps **Nourie**. Deployed at [sunshine.vercel.app](https://sunshine.vercel.app).
+Girlie English chat where **Maria** helps **Nourie**.
+
+**Live:** [sunshine-maria.vercel.app](https://sunshine-maria.vercel.app) · [sunshine-sooty.vercel.app](https://sunshine-sooty.vercel.app)
+
+`sunshine.vercel.app` is already taken on Vercel, so production uses the aliases above. GitHub: [ritzaisolutions-dotcom/sunshine](https://github.com/ritzaisolutions-dotcom/sunshine).
 
 ## Stack
 
