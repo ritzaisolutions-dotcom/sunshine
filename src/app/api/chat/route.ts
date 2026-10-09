@@ -1,8 +1,11 @@
 import { NextRequest } from "next/server";
+import { pickChatModel } from "@/lib/model-pick";
 import {
   BACKLOG_RULE,
   CHEER_RULE,
   DEFAULT_SYSTEM_PROMPT,
+  IMAGE_RULE,
+  SEARCH_RULE,
 } from "@/lib/prompts";
 
 type IncomingAttachment = {
@@ -96,6 +99,8 @@ export async function POST(req: NextRequest) {
   const systemParts = [
     body.systemPrompt?.trim() || DEFAULT_SYSTEM_PROMPT,
     `\n\n${CHEER_RULE}`,
+    `\n\n${IMAGE_RULE}`,
+    `\n\n${SEARCH_RULE}`,
     `\n\n${BACKLOG_RULE}`,
     body.notesDocument
       ? `\n\nAbout Noorie (living memory — use this, do not invent):\n${body.notesDocument}`
@@ -109,9 +114,11 @@ export async function POST(req: NextRequest) {
     content: string | Array<Record<string, unknown>>;
   }> = [{ role: "system", content: systemParts }];
 
+  let lastUserText = "";
   body.messages.forEach((m, index) => {
     const isLastUser =
       m.role === "user" && index === body.messages.length - 1;
+    if (isLastUser) lastUserText = m.content;
     mistralMessages.push({
       role: m.role,
       content: isLastUser
@@ -120,6 +127,8 @@ export async function POST(req: NextRequest) {
     });
   });
 
+  const model = pickChatModel(lastUserText);
+
   const upstream = await fetch("https://api.mistral.ai/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -127,7 +136,7 @@ export async function POST(req: NextRequest) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "mistral-small-latest",
+      model,
       stream: true,
       messages: mistralMessages,
     }),

@@ -9,11 +9,15 @@ import {
   Mic,
   MicOff,
   Paperclip,
+  Pencil,
   Plus,
+  RefreshCw,
   Send,
+  Volume2,
   X,
 } from "lucide-react";
 import { BowField } from "@/components/bow-pattern";
+import { CloudSyncPanel } from "@/components/cloud-sync-panel";
 import { DiagramView } from "@/components/diagram-view";
 import { LoadingDots } from "@/components/loading-dots";
 import { SlideDeckView } from "@/components/slide-deck";
@@ -29,6 +33,7 @@ import {
   MessageHeader,
 } from "@/components/ui/message";
 import { Textarea } from "@/components/ui/textarea";
+import { needsWebLookup } from "@/lib/model-pick";
 import { parseAssistantReply } from "@/lib/parse-reply";
 import {
   addBacklogWishes,
@@ -106,6 +111,7 @@ export function SunshineApp() {
   const [showNotes, setShowNotes] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [listening, setListening] = useState(false);
+  const [speakingId, setSpeakingId] = useState<string | null>(null);
   const [waterShowing, setWaterShowing] = useState(false);
   const [previewSurprise, setPreviewSurprise] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -248,67 +254,49 @@ export function SunshineApp() {
     setListening(true);
   };
 
-  const sendMessage = async () => {
-    if (!active || sending) return;
-    const text = draft.trim();
-    if (!text && !pendingFiles.length) return;
+  const speakMessage = (messageId: string, text: string) => {
+    if (typeof window === "undefined" || !window.speechSynthesis) {
+      setError("Speaking aloud is not supported in this browser.");
+      return;
+    }
+    const clean = text.trim();
+    if (!clean) return;
+    window.speechSynthesis.cancel();
+    if (speakingId === messageId) {
+      setSpeakingId(null);
+      return;
+    }
+    const utter = new SpeechSynthesisUtterance(clean);
+    utter.lang = "en-US";
+    utter.rate = 0.95;
+    utter.onend = () => setSpeakingId(null);
+    utter.onerror = () => setSpeakingId(null);
+    setSpeakingId(messageId);
+    window.speechSynthesis.speak(utter);
+  };
 
+  const runAssistantTurn = async (opts: {
+    history: ChatMessage[];
+    assistantId: string;
+    filesForRequest: PendingFile[];
+    userContentForMemory: string;
+  }) => {
     const settings = loadSettings();
-    const now = new Date().toISOString();
-    const attachmentMeta: AttachmentMeta[] = pendingFiles.map((f) => ({
-      name: f.name,
-      mimeType: f.mimeType,
-      size: f.size,
-    }));
+    const { history, assistantId, filesForRequest, userContentForMemory } =
+      opts;
 
-    const userMessage: ChatMessage = {
-      id: newId(),
-      role: "user",
-      content: text || "(attached files)",
-      createdAt: now,
-      attachments: attachmentMeta.length ? attachmentMeta : undefined,
-    };
-
-    const assistantId = newId();
-    const title =
-      active.messages.length === 0 || active.title === "New chat"
-        ? (text || attachmentMeta[0]?.name || "New chat").slice(0, 48)
-        : active.title;
-
-    updateActive((thread) => ({
-      ...thread,
-      title,
-      updatedAt: now,
-      messages: [
-        ...thread.messages,
-        userMessage,
-        {
-          id: assistantId,
-          role: "assistant",
-          content: "",
-          createdAt: now,
-          status: "Writing…",
-        },
-      ],
-    }));
-
-    setDraft("");
-    const filesForRequest = pendingFiles;
-    setPendingFiles([]);
     setSending(true);
     setError(null);
 
     try {
-      const history = [...(active.messages), userMessage].map((m) => ({
-        role: m.role as "user" | "assistant",
-        content: m.content,
-      }));
-
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: history,
+          messages: history.map((m) => ({
+            role: m.role as "user" | "assistant",
+            content: m.content,
+          })),
           systemPrompt: settings.systemPrompt,
           notesDocument: notesToDocument(notes),
           apiKey: settings.mistralApiKey || undefined,
@@ -349,6 +337,90 @@ export function SunshineApp() {
         addBacklogWishes(parsed.backlogItems, "chat");
       }
 
+      let replyText = parsed.text || full;
+      let sources: Array<{ title: string; url: string }> | undefined;
+      const lookupQuery =
+        parsed.searchQuery ||
+        (needsWebLookup(userContentForMemory)
+          ? userContentForMemory.slice(0, 200)
+          : undefined);
+
+      if (lookupQuery) {
+        updateActive((thread) => ({
+          ...thread,
+          messages: thread.messages.map((m) =>
+            m.id === assistantId
+              ? {
+                  ...m,
+                  content: replyText || "Looking that up…",
+                  deck: parsed.deck,
+                  diagram: parsed.diagram,
+                  status: "Looking it up…",
+                }
+              : m
+          ),
+        }));
+        const searchRes = await fetch("/api/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            query: lookupQuery,
+            apiKey: settings.mistralApiKey || undefined,
+          }),
+        });
+        const searchData = (await searchRes.json().catch(() => null)) as {
+          text?: string;
+          sources?: Array<{ title: string; url: string }>;
+          error?: string;
+        } | null;
+        if (!searchRes.ok || !searchData?.text) {
+          throw new Error(
+            searchData?.error || "Maria could not look that up right now."
+          );
+        }
+        const warm = parsed.text?.trim();
+        replyText = warm
+          ? `${warm}\n\n${searchData.text.trim()}`
+          : searchData.text.trim();
+        sources = searchData.sources?.length ? searchData.sources : undefined;
+      }
+
+      let drawn: { src: string; alt: string } | undefined;
+      if (parsed.imagePrompt) {
+        updateActive((thread) => ({
+          ...thread,
+          messages: thread.messages.map((m) =>
+            m.id === assistantId
+              ? {
+                  ...m,
+                  content: replyText,
+                  deck: parsed.deck,
+                  diagram: parsed.diagram,
+                  sources,
+                  status: "Drawing…",
+                }
+              : m
+          ),
+        }));
+        const imageRes = await fetch("/api/image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: parsed.imagePrompt,
+            apiKey: settings.mistralApiKey || undefined,
+          }),
+        });
+        const imageData = (await imageRes.json().catch(() => null)) as {
+          src?: string;
+          alt?: string;
+          error?: string;
+        } | null;
+        if (!imageRes.ok || !imageData?.src) {
+          throw new Error(imageData?.error || "The picture did not come back.");
+        }
+        drawn = { src: imageData.src, alt: imageData.alt || parsed.imagePrompt };
+      }
+
       updateActive((thread) => ({
         ...thread,
         updatedAt: new Date().toISOString(),
@@ -356,19 +428,20 @@ export function SunshineApp() {
           m.id === assistantId
             ? {
                 ...m,
-                content: parsed.text || full,
+                content: replyText,
                 deck: parsed.deck,
                 diagram: parsed.diagram,
+                image: drawn,
+                sources,
                 status: "Done",
               }
             : m
         ),
       }));
 
-      // Continue memory about Nourie
       const transcript = [
-        `Noorie: ${userMessage.content}`,
-        `Maria Sunshine: ${parsed.text || full}`,
+        `Noorie: ${userContentForMemory}`,
+        `Maria Sunshine: ${replyText}`,
       ].join("\n");
       void fetch("/api/memory", {
         method: "POST",
@@ -386,7 +459,6 @@ export function SunshineApp() {
         })
         .catch(() => undefined);
 
-      // Safety net: catch upgrade wishes even if Maria forgot the backlog fence
       if (!parsed.backlogItems?.length) {
         void fetch("/api/backlog", {
           method: "POST",
@@ -422,6 +494,134 @@ export function SunshineApp() {
     } finally {
       setSending(false);
     }
+  };
+
+  const sendMessage = async () => {
+    if (!active || sending) return;
+    const text = draft.trim();
+    if (!text && !pendingFiles.length) return;
+
+    const now = new Date().toISOString();
+    const attachmentMeta: AttachmentMeta[] = pendingFiles.map((f) => ({
+      name: f.name,
+      mimeType: f.mimeType,
+      size: f.size,
+    }));
+
+    const userMessage: ChatMessage = {
+      id: newId(),
+      role: "user",
+      content: text || "(attached files)",
+      createdAt: now,
+      attachments: attachmentMeta.length ? attachmentMeta : undefined,
+    };
+
+    const assistantId = newId();
+    const title =
+      active.messages.length === 0 || active.title === "New chat"
+        ? (text || attachmentMeta[0]?.name || "New chat").slice(0, 48)
+        : active.title;
+
+    const history = [...active.messages, userMessage];
+
+    updateActive((thread) => ({
+      ...thread,
+      title,
+      updatedAt: now,
+      messages: [
+        ...thread.messages,
+        userMessage,
+        {
+          id: assistantId,
+          role: "assistant",
+          content: "",
+          createdAt: now,
+          status: "Writing…",
+        },
+      ],
+    }));
+
+    setDraft("");
+    const filesForRequest = pendingFiles;
+    setPendingFiles([]);
+
+    await runAssistantTurn({
+      history,
+      assistantId,
+      filesForRequest,
+      userContentForMemory: userMessage.content,
+    });
+  };
+
+  const regenerateLast = async () => {
+    if (!active || sending) return;
+    const messages = active.messages;
+    let lastAssistantIndex = -1;
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      if (messages[i]?.role === "assistant") {
+        lastAssistantIndex = i;
+        break;
+      }
+    }
+    if (lastAssistantIndex < 0) return;
+
+    let lastUserIndex = -1;
+    for (let i = lastAssistantIndex - 1; i >= 0; i -= 1) {
+      if (messages[i]?.role === "user") {
+        lastUserIndex = i;
+        break;
+      }
+    }
+    if (lastUserIndex < 0) return;
+
+    const userMessage = messages[lastUserIndex]!;
+    const assistantId = newId();
+    const now = new Date().toISOString();
+    const history = messages.slice(0, lastAssistantIndex);
+
+    updateActive((thread) => ({
+      ...thread,
+      updatedAt: now,
+      messages: [
+        ...thread.messages.slice(0, lastAssistantIndex),
+        {
+          id: assistantId,
+          role: "assistant",
+          content: "",
+          createdAt: now,
+          status: "Writing…",
+        },
+      ],
+    }));
+
+    await runAssistantTurn({
+      history,
+      assistantId,
+      filesForRequest: [],
+      userContentForMemory: userMessage.content,
+    });
+  };
+
+  const editLastUser = () => {
+    if (!active || sending) return;
+    const messages = active.messages;
+    let lastUserIndex = -1;
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      if (messages[i]?.role === "user") {
+        lastUserIndex = i;
+        break;
+      }
+    }
+    if (lastUserIndex < 0) return;
+    const userMessage = messages[lastUserIndex]!;
+    setDraft(userMessage.content === "(attached files)" ? "" : userMessage.content);
+    setPendingFiles([]);
+    setError(null);
+    updateActive((thread) => ({
+      ...thread,
+      updatedAt: new Date().toISOString(),
+      messages: thread.messages.slice(0, lastUserIndex),
+    }));
   };
 
   if (!ready) {
@@ -533,6 +733,18 @@ export function SunshineApp() {
           Study sheet
         </Link>
       </div>
+      <CloudSyncPanel
+        chats={chats}
+        notes={notes}
+        onPulled={(nextChats, nextNotes) => {
+          setNotes(nextNotes);
+          if (nextChats.length) {
+            setChats(nextChats);
+            setActiveId(nextChats[0]?.id ?? null);
+          }
+          setSidebarOpen(false);
+        }}
+      />
     </aside>
   );
 
@@ -606,6 +818,7 @@ export function SunshineApp() {
                     {[
                       "Explain this in a simple way",
                       "Make me slides",
+                      "Draw me a picture",
                       "Quiz me",
                     ].map((idea) => (
                       <button
@@ -621,8 +834,19 @@ export function SunshineApp() {
                 </div>
               ) : (
                 <>
-                  {active?.messages.map((message) => {
+                  {active?.messages.map((message, index) => {
                     const isUser = message.role === "user";
+                    const lastUserIndex = active.messages.reduce(
+                      (acc, m, i) => (m.role === "user" ? i : acc),
+                      -1
+                    );
+                    const lastAssistantIndex = active.messages.reduce(
+                      (acc, m, i) => (m.role === "assistant" ? i : acc),
+                      -1
+                    );
+                    const isLastUser = isUser && index === lastUserIndex;
+                    const isLastAssistant =
+                      !isUser && index === lastAssistantIndex;
                     return (
                       <Message key={message.id} align={isUser ? "start" : "end"}>
                         <MessageContent>
@@ -659,11 +883,73 @@ export function SunshineApp() {
                               ) : null}
                             </BubbleContent>
                           </Bubble>
+                          {message.image ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={message.image.src}
+                              alt={message.image.alt}
+                              className="mt-2 max-w-md rounded-2xl border border-border"
+                            />
+                          ) : null}
                           {message.deck ? (
                             <SlideDeckView deck={message.deck} />
                           ) : null}
                           {message.diagram ? (
                             <DiagramView diagram={message.diagram} />
+                          ) : null}
+                          {message.sources?.length ? (
+                            <p className="mt-1.5 max-w-md text-[11px] leading-snug text-rapunzel-plum/75">
+                              Sources:{" "}
+                              {message.sources.map((source, i) => (
+                                <span key={source.url}>
+                                  {i > 0 ? " · " : null}
+                                  <a
+                                    href={source.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="underline decoration-rapunzel-gold/60 underline-offset-2 hover:text-rapunzel-plum"
+                                  >
+                                    {source.title}
+                                  </a>
+                                </span>
+                              ))}
+                            </p>
+                          ) : null}
+                          {isLastUser && !sending ? (
+                            <MessageFooter className="gap-2">
+                              <button
+                                type="button"
+                                onClick={editLastUser}
+                                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] text-rapunzel-plum hover:bg-white/70"
+                              >
+                                <Pencil className="size-3" />
+                                Edit
+                              </button>
+                            </MessageFooter>
+                          ) : null}
+                          {isLastAssistant &&
+                          message.content &&
+                          !sending ? (
+                            <MessageFooter className="gap-2">
+                              <button
+                                type="button"
+                                onClick={() => void regenerateLast()}
+                                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] text-rapunzel-plum hover:bg-white/70"
+                              >
+                                <RefreshCw className="size-3" />
+                                Try again
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  speakMessage(message.id, message.content)
+                                }
+                                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] text-rapunzel-plum hover:bg-white/70"
+                              >
+                                <Volume2 className="size-3" />
+                                {speakingId === message.id ? "Stop" : "Speak"}
+                              </button>
+                            </MessageFooter>
                           ) : null}
                           {!isUser &&
                           message.status &&

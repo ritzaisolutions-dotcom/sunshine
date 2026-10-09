@@ -4,6 +4,8 @@ export type ParsedReply = {
   text: string;
   deck?: SlideDeck;
   diagram?: DiagramBlock;
+  imagePrompt?: string;
+  searchQuery?: string;
   backlogItems?: string[];
 };
 
@@ -22,6 +24,8 @@ export function parseAssistantReply(content: string): ParsedReply {
   let working = content;
   let deck: SlideDeck | undefined;
   let diagram: DiagramBlock | undefined;
+  let imagePrompt: string | undefined;
+  let searchQuery: string | undefined;
   let backlogItems: string[] | undefined;
 
   const slides = extractFence(working, "slides");
@@ -46,6 +50,32 @@ export function parseAssistantReply(content: string): ParsedReply {
     }
   }
 
+  const picture = extractFence(working, "image");
+  working = picture.text;
+  if (picture.body) {
+    try {
+      const parsed = JSON.parse(picture.body) as { prompt?: unknown };
+      if (typeof parsed.prompt === "string" && parsed.prompt.trim()) {
+        imagePrompt = parsed.prompt.trim();
+      }
+    } catch {
+      if (picture.body.trim()) imagePrompt = picture.body.trim();
+    }
+  }
+
+  const search = extractFence(working, "search");
+  working = search.text;
+  if (search.body) {
+    try {
+      const parsed = JSON.parse(search.body) as { query?: unknown };
+      if (typeof parsed.query === "string" && parsed.query.trim()) {
+        searchQuery = parsed.query.trim();
+      }
+    } catch {
+      if (search.body.trim()) searchQuery = search.body.trim();
+    }
+  }
+
   const backlog = extractFence(working, "backlog");
   working = backlog.text;
   if (backlog.body) {
@@ -62,5 +92,12 @@ export function parseAssistantReply(content: string): ParsedReply {
     }
   }
 
-  return { text: working.trim(), deck, diagram, backlogItems };
+  return {
+    text: working.trim(),
+    deck,
+    diagram,
+    imagePrompt,
+    searchQuery,
+    backlogItems,
+  };
 }

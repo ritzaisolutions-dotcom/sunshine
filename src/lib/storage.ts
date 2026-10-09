@@ -43,7 +43,21 @@ export function loadChats(): ChatThread[] {
 }
 
 export function saveChats(chats: ChatThread[]) {
-  writeJson(KEYS.chats, chats);
+  try {
+    writeJson(KEYS.chats, chats);
+  } catch {
+    const slim = chats.map((thread) => ({
+      ...thread,
+      messages: thread.messages.map((message) =>
+        message.image ? { ...message, image: undefined } : message
+      ),
+    }));
+    try {
+      writeJson(KEYS.chats, slim);
+    } catch {
+      /* The browser storage is full. Keep the pictures on screen for this visit. */
+    }
+  }
 }
 
 export function loadActiveChatId(): string | null {

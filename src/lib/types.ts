@@ -32,6 +32,8 @@ export type ChatMessage = {
   attachments?: AttachmentMeta[];
   deck?: SlideDeck;
   diagram?: DiagramBlock;
+  image?: { src: string; alt: string };
+  sources?: Array<{ title: string; url: string }>;
   status?: string;
 };
 
