@@ -55,17 +55,9 @@ export type ChatCopy = {
   sync: {
     title: string;
     blurb: string;
-    placeholder: string;
-    save: string;
-    load: string;
-    newCode: string;
-    forget: string;
-    needKey: string;
-    noVault: string;
-    pulled: string;
-    created: string;
-    saved: string;
-    cleared: string;
+    loading: string;
+    saving: string;
+    autoOk: string;
     failed: string;
     missingEnv: string;
   };
@@ -533,22 +525,12 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         installApp: "Sunshine installieren",
         dismissInstall: "Nicht jetzt",
         sync: {
-          title: "Folge mir",
+          title: "Cloud",
           blurb:
-            "Derselbe Sync-Code auf Telefon und Laptop teilt Chats und Über Noorie.",
-          placeholder: "Sync-Code",
-          save: "In die Cloud",
-          load: "Laden",
-          newCode: "Neuer Code",
-          forget: "Vergessen",
-          needKey: "Gib zuerst einen Sync-Code ein oder erstelle einen.",
-          noVault:
-            "Für diesen Code gibt es noch keinen Vault. Speichere zuerst von diesem Gerät.",
-          pulled: "Chats und Über Noorie aus der Cloud geladen.",
-          created:
-            "Neuer Sync-Code ist bereit. Speichere ihn, öffne Sunshine auf einem anderen Gerät und füge ihn ein.",
-          saved: "Chats und Über Noorie in die Cloud gespeichert.",
-          cleared: "Lokaler Sync-Code gelöscht.",
+            "Chats und Über Noorie speichern sich automatisch — auf Telefon und Laptop gleich.",
+          loading: "Cloud wird geladen…",
+          saving: "Wird gespeichert…",
+          autoOk: "Automatisch synchron",
           failed: "Sync fehlgeschlagen.",
           missingEnv:
             "Cloud-Sync braucht NEXT_PUBLIC_SUPABASE_URL und NEXT_PUBLIC_SUPABASE_ANON_KEY auf dem Server.",
@@ -625,21 +607,12 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         installApp: "Install Sunshine",
         dismissInstall: "Not now",
         sync: {
-          title: "Follow me",
+          title: "Cloud",
           blurb:
-            "Same sync code on phone and laptop shares chats and About Noorie.",
-          placeholder: "Sync code",
-          save: "Save to cloud",
-          load: "Load",
-          newCode: "New code",
-          forget: "Forget",
-          needKey: "Enter or create a sync code first.",
-          noVault: "No vault yet for this code. Save from this phone first.",
-          pulled: "Pulled chats and About Noorie from the cloud.",
-          created:
-            "New sync code ready. Save it, then open Sunshine on another device and paste it.",
-          saved: "Saved chats and About Noorie to the cloud.",
-          cleared: "Cleared local sync code.",
+            "Chats and About Noorie save automatically — same on phone and laptop.",
+          loading: "Loading cloud…",
+          saving: "Saving…",
+          autoOk: "Synced automatically",
           failed: "Sync failed.",
           missingEnv:
             "Cloud sync needs NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY on the server.",

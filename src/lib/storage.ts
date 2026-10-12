@@ -23,7 +23,7 @@ const KEYS = {
 } as const;
 
 /** Bump this when shipping a new one-time “What’s new” card. */
-export const WHATS_NEW_VERSION = "2026-10-installable";
+export const WHATS_NEW_VERSION = "2026-10-auto-cloud";
 
 function canUseStorage(): boolean {
   return typeof window !== "undefined" && typeof localStorage !== "undefined";

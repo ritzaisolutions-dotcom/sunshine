@@ -24,7 +24,10 @@ import {
   X,
 } from "lucide-react";
 import { BowField } from "@/components/bow-pattern";
-import { CloudSyncPanel } from "@/components/cloud-sync-panel";
+import {
+  CloudSyncPanel,
+  type CloudSyncStatus,
+} from "@/components/cloud-sync-panel";
 import { DiagramView } from "@/components/diagram-view";
 import { LoadingDots } from "@/components/loading-dots";
 import { SlideDeckView } from "@/components/slide-deck";
@@ -42,6 +45,7 @@ import {
   MessageHeader,
 } from "@/components/ui/message";
 import { Textarea } from "@/components/ui/textarea";
+import { pullCloudVault, pushCloudVault } from "@/lib/cloud-sync";
 import {
   browserReplyLanguage,
   canReplaceChatTitle,
@@ -155,9 +159,13 @@ export function SunshineApp() {
   const [waterShowing, setWaterShowing] = useState(false);
   const [whatsNewShowing, setWhatsNewShowing] = useState(false);
   const [previewSurprise, setPreviewSurprise] = useState<string | null>(null);
+  const [cloudStatus, setCloudStatus] = useState<CloudSyncStatus>("loading");
+  const [cloudHydrated, setCloudHydrated] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<{ stop: () => void } | null>(null);
+  const skipNextPushRef = useRef(false);
+  const cloudEnabledRef = useRef(false);
 
   useEffect(() => {
     const stored = loadChats();
@@ -205,6 +213,50 @@ export function SunshineApp() {
 
   useEffect(() => {
     if (!ready) return;
+    let cancelled = false;
+    setCloudStatus("loading");
+    void (async () => {
+      try {
+        const result = await pullCloudVault();
+        if (cancelled) return;
+        if (!result.configured) {
+          cloudEnabledRef.current = false;
+          setCloudStatus("off");
+          setCloudHydrated(true);
+          return;
+        }
+        cloudEnabledRef.current = true;
+        if (result.found) {
+          skipNextPushRef.current = true;
+          setNotes(result.notes);
+          if (result.chats.length) {
+            setChats(result.chats);
+            const preferred = loadActiveChatId();
+            const nextActive =
+              (preferred &&
+                result.chats.some((chat) => chat.id === preferred) &&
+                preferred) ||
+              result.chats[0]?.id ||
+              null;
+            setActiveId(nextActive);
+          }
+        }
+        setCloudStatus("ok");
+        setCloudHydrated(true);
+      } catch {
+        if (cancelled) return;
+        cloudEnabledRef.current = true;
+        setCloudStatus("error");
+        setCloudHydrated(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [ready]);
+
+  useEffect(() => {
+    if (!ready) return;
     saveChats(chats);
   }, [chats, ready]);
 
@@ -217,6 +269,21 @@ export function SunshineApp() {
     if (!ready) return;
     saveNotes(notes);
   }, [notes, ready]);
+
+  useEffect(() => {
+    if (!ready || !cloudHydrated || !cloudEnabledRef.current) return;
+    if (skipNextPushRef.current) {
+      skipNextPushRef.current = false;
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      setCloudStatus("saving");
+      void pushCloudVault(chats, notes)
+        .then(() => setCloudStatus("ok"))
+        .catch(() => setCloudStatus("error"));
+    }, 1500);
+    return () => window.clearTimeout(timer);
+  }, [chats, notes, ready, cloudHydrated]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -858,19 +925,7 @@ export function SunshineApp() {
           {copy.studySheet}
         </Link>
       </div>
-      <CloudSyncPanel
-        chats={chats}
-        notes={notes}
-        lang={activeLanguage}
-        onPulled={(nextChats, nextNotes) => {
-          setNotes(nextNotes);
-          if (nextChats.length) {
-            setChats(nextChats);
-            setActiveId(nextChats[0]?.id ?? null);
-          }
-          setSidebarOpen(false);
-        }}
-      />
+      <CloudSyncPanel lang={activeLanguage} status={cloudStatus} />
     </aside>
   );
 

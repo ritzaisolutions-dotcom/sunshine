@@ -1,80 +1,58 @@
-import { getSupabase } from "@/lib/supabase";
-import { ChatThread, EMPTY_NOTES, NourieNotes } from "@/lib/types";
-
-const SYNC_KEY = "sunshine.syncKey";
-
-export function loadSyncKey(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(SYNC_KEY);
-}
-
-export function saveSyncKey(key: string) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(SYNC_KEY, key.trim());
-}
-
-export function clearSyncKey() {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem(SYNC_KEY);
-}
-
-export function createSyncKey(): string {
-  return `sunshine-${crypto.randomUUID().replace(/-/g, "").slice(0, 20)}`;
-}
+import { ChatThread, NourieNotes } from "@/lib/types";
 
 type PullResult =
-  | { found: false }
-  | { found: true; chats: ChatThread[]; notes: NourieNotes; updatedAt: string };
+  | { found: false; configured: boolean }
+  | {
+      found: true;
+      configured: true;
+      chats: ChatThread[];
+      notes: NourieNotes;
+      updatedAt: string;
+    };
 
-export async function pullCloudVault(syncKey: string): Promise<PullResult> {
-  const supabase = getSupabase();
-  if (!supabase) throw new Error("Cloud sync is not configured on this server.");
-
-  const { data, error } = await supabase.rpc("sunshine_pull", {
-    p_key: syncKey.trim(),
-  });
-  if (error) throw new Error(error.message);
-
-  const payload = data as {
+/** Load the single shared vault for Noorie (no sync code). */
+export async function pullCloudVault(): Promise<PullResult> {
+  const res = await fetch("/api/vault", { method: "GET", cache: "no-store" });
+  if (res.status === 503) {
+    return { found: false, configured: false };
+  }
+  if (!res.ok) {
+    const data = (await res.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(data?.error || `Could not load cloud vault (${res.status})`);
+  }
+  const payload = (await res.json()) as {
     found?: boolean;
     chats?: ChatThread[];
     notes?: NourieNotes;
     updatedAt?: string;
   };
-
-  if (!payload?.found) return { found: false };
-
+  if (!payload.found) return { found: false, configured: true };
   return {
     found: true,
+    configured: true,
     chats: Array.isArray(payload.chats) ? payload.chats : [],
-    notes: payload.notes ?? EMPTY_NOTES,
+    notes: payload.notes as NourieNotes,
     updatedAt: payload.updatedAt ?? new Date().toISOString(),
   };
 }
 
+/** Save the single shared vault for Noorie (no sync code). */
 export async function pushCloudVault(
-  syncKey: string,
   chats: ChatThread[],
   notes: NourieNotes
 ): Promise<{ updatedAt: string }> {
-  const supabase = getSupabase();
-  if (!supabase) throw new Error("Cloud sync is not configured on this server.");
-
-  // Drop large inline images before upload so the vault stays small.
-  const slimChats = chats.map((thread) => ({
-    ...thread,
-    messages: thread.messages.map((message) =>
-      message.image ? { ...message, image: undefined } : message
-    ),
-  }));
-
-  const { data, error } = await supabase.rpc("sunshine_push", {
-    p_key: syncKey.trim(),
-    p_chats: slimChats,
-    p_notes: notes,
+  const res = await fetch("/api/vault", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chats, notes }),
   });
-  if (error) throw new Error(error.message);
-
-  const payload = data as { updatedAt?: string };
+  if (res.status === 503) {
+    throw new Error("Cloud sync is not configured.");
+  }
+  if (!res.ok) {
+    const data = (await res.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(data?.error || `Could not save cloud vault (${res.status})`);
+  }
+  const payload = (await res.json()) as { updatedAt?: string };
   return { updatedAt: payload.updatedAt ?? new Date().toISOString() };
 }

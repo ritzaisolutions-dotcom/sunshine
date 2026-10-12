@@ -77,8 +77,9 @@ const FEATURES = [
   },
   {
     icon: Cloud,
-    title: "Follow me",
-    blurb: "Save chats and About Noorie with a sync code on phone and laptop.",
+    title: "Always synced",
+    blurb:
+      "Open Sunshine anywhere — chats and About Noorie follow you automatically. No sync code.",
   },
 ] as const;
 
