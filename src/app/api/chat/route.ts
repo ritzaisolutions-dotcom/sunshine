@@ -8,6 +8,7 @@ import {
   IMAGE_RULE,
   SEARCH_RULE,
   TITLE_RULE,
+  TODO_RULE,
 } from "@/lib/prompts";
 
 type IncomingAttachment = {
@@ -25,6 +26,7 @@ type ChatBody = {
   messages: IncomingMessage[];
   systemPrompt?: string;
   notesDocument?: string;
+  todosDocument?: string;
   apiKey?: string;
   attachments?: IncomingAttachment[];
   lang?: "de" | "en";
@@ -111,9 +113,13 @@ export async function POST(req: NextRequest) {
     `\n\n${IMAGE_RULE}`,
     `\n\n${SEARCH_RULE}`,
     `\n\n${BACKLOG_RULE}`,
+    `\n\n${TODO_RULE}`,
     `\n\n${TITLE_RULE}`,
     body.notesDocument
       ? `\n\nAbout Noorie (living memory — use this, do not invent):\n${body.notesDocument}`
+      : "",
+    body.todosDocument
+      ? `\n\nNoorie's Sunshine to-dos (use this, do not invent missing ones):\n${body.todosDocument}`
       : "",
     `\n\n${languageInstruction(replyLanguage)}`,
   ]

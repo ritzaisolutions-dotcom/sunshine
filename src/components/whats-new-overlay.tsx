@@ -7,6 +7,7 @@ import {
   Droplets,
   ImageIcon,
   Languages,
+  ListTodo,
   Mic,
   Pencil,
   RefreshCw,
@@ -80,6 +81,12 @@ const FEATURES = [
     title: "Always synced",
     blurb:
       "Open Sunshine anywhere — chats and About Noorie follow you automatically. No sync code.",
+  },
+  {
+    icon: ListTodo,
+    title: "To-dos & habits",
+    blurb:
+      "Add tasks on the To-dos page or ask Maria. Deadlines get a gentle reminder; daily and weekly habits come back.",
   },
 ] as const;
 

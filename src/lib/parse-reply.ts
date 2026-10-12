@@ -1,3 +1,4 @@
+import type { TodoAction, TodoRecurrence } from "@/lib/todos";
 import { DiagramBlock, SlideDeck } from "@/lib/types";
 
 export type ParsedReply = {
@@ -7,6 +8,7 @@ export type ParsedReply = {
   imagePrompt?: string;
   searchQuery?: string;
   backlogItems?: string[];
+  todoActions?: TodoAction[];
   title?: string;
 };
 
@@ -28,6 +30,7 @@ export function parseAssistantReply(content: string): ParsedReply {
   let imagePrompt: string | undefined;
   let searchQuery: string | undefined;
   let backlogItems: string[] | undefined;
+  let todoActions: TodoAction[] | undefined;
 
   const slides = extractFence(working, "slides");
   working = slides.text;
@@ -93,6 +96,22 @@ export function parseAssistantReply(content: string): ParsedReply {
     }
   }
 
+  const todoFence = extractFence(working, "todo");
+  working = todoFence.text;
+  if (todoFence.body) {
+    try {
+      const parsed = JSON.parse(todoFence.body) as { actions?: unknown };
+      if (Array.isArray(parsed.actions)) {
+        todoActions = parsed.actions
+          .map((raw) => normalizeTodoAction(raw))
+          .filter((action): action is TodoAction => Boolean(action));
+        if (!todoActions.length) todoActions = undefined;
+      }
+    } catch {
+      /* keep prose */
+    }
+  }
+
   let title: string | undefined;
   const topic = extractFence(working, "title");
   working = topic.text;
@@ -114,6 +133,44 @@ export function parseAssistantReply(content: string): ParsedReply {
     imagePrompt,
     searchQuery,
     backlogItems,
+    todoActions,
     title,
   };
+}
+
+function asRecurrence(value: unknown): TodoRecurrence {
+  if (value === "daily" || value === "weekly" || value === "none") return value;
+  return "none";
+}
+
+function normalizeTodoAction(raw: unknown): TodoAction | null {
+  if (!raw || typeof raw !== "object") return null;
+  const action = raw as Record<string, unknown>;
+  const op = action.op;
+  if (op === "list") return { op: "list" };
+  if (op === "complete") {
+    const title = typeof action.title === "string" ? action.title.trim() : "";
+    if (!title) return null;
+    return {
+      op: "complete",
+      title,
+      id: typeof action.id === "string" ? action.id : undefined,
+    };
+  }
+  if (op === "add") {
+    const title = typeof action.title === "string" ? action.title.trim() : "";
+    if (!title) return null;
+    const dueAt =
+      typeof action.dueAt === "string" && action.dueAt.trim()
+        ? action.dueAt.trim()
+        : null;
+    return {
+      op: "add",
+      title,
+      dueAt,
+      recurrence: asRecurrence(action.recurrence),
+      suggested: Boolean(action.suggested),
+    };
+  }
+  return null;
 }

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
 import { EMPTY_NOTES, type ChatThread, type NourieNotes } from "@/lib/types";
+import { sunshineVaultKey } from "@/lib/vault-key";
 
 function vaultKey(): string {
-  const key = process.env.SUNSHINE_VAULT_KEY?.trim();
-  return key && key.length >= 8 ? key : "sunshine-noorie-primary";
+  return sunshineVaultKey();
 }
 
 export async function GET() {

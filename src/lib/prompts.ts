@@ -99,6 +99,17 @@ export const BACKLOG_RULE = `If Noorie asks for any change, upgrade, fix, or new
 \`\`\`
 Do not invent wishes. Ordinary learning requests are not backlog items.`;
 
+export const TODO_RULE = `You can help Noorie with her Sunshine to-dos. Use the Open todos list in context. Do not invent tasks that are not there when she asks what is left.
+
+When she clearly asks to add, remember, or complete a to-do (or a daily/weekly habit), warmly confirm and end your reply with:
+\`\`\`todo
+{"actions":[{"op":"add","title":"Short task","dueAt":null,"recurrence":"none","suggested":false}]}
+\`\`\`
+Ops: "add", "complete" (include matching title), or "list" (no side effect — just answer in prose).
+recurrence is "none", "daily", or "weekly". dueAt is ISO datetime or null.
+If she explicitly asks to add it, set suggested false (opens immediately). If you only gently propose a useful task she did not ask for, set suggested true.
+Do not spam suggestions. Learning questions alone are not to-dos.`;
+
 export const TITLE_RULE = `When this chat still needs a short topic title (first real learning question in the thread), end your reply with a fenced block exactly like this:
 \`\`\`title
 {"title":"Short topic in Noorie's language"}

@@ -31,6 +31,7 @@ export type ChatCopy = {
   putAwayAria: (title: string) => string;
   aboutNoorie: string;
   hideNotes: string;
+  todosNav: string;
   edit: string;
   tryAgain: string;
   attach: string;
@@ -50,6 +51,32 @@ export type ChatCopy = {
   updateApp: string;
   installApp: string;
   dismissInstall: string;
+  todos: {
+    title: string;
+    back: string;
+    open: string;
+    done: string;
+    suggested: string;
+    add: string;
+    placeholder: string;
+    dueOptional: string;
+    recurrence: string;
+    none: string;
+    daily: string;
+    weekly: string;
+    accept: string;
+    dismiss: string;
+    emptyOpen: string;
+    emptyDone: string;
+    emptySuggested: string;
+    markDone: string;
+    reopen: string;
+    delete: string;
+    loading: string;
+    failed: string;
+    reminderTitle: string;
+    reminderClose: string;
+  };
 };
 
 const GERMAN_WORDS = new Set([
@@ -467,6 +494,7 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         putAwayAria: (title) => `${title} weglegen`,
         aboutNoorie: "Über Noorie",
         hideNotes: "Notizen aus",
+        todosNav: "To-dos",
         edit: "Bearbeiten",
         tryAgain: "Nochmal",
         attach: "Anhang",
@@ -510,6 +538,32 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         updateApp: "Sunshine aktualisieren",
         installApp: "Sunshine installieren",
         dismissInstall: "Nicht jetzt",
+        todos: {
+          title: "To-dos",
+          back: "Zurück zum Chat",
+          open: "Offen",
+          done: "Erledigt",
+          suggested: "Maria schlägt vor",
+          add: "Hinzufügen",
+          placeholder: "Neues To-do…",
+          dueOptional: "Fällig (optional)",
+          recurrence: "Wiederholung",
+          none: "Einmalig",
+          daily: "Täglich",
+          weekly: "Wöchentlich",
+          accept: "Annehmen",
+          dismiss: "Weglegen",
+          emptyOpen: "Noch keine offenen To-dos.",
+          emptyDone: "Noch nichts erledigt.",
+          emptySuggested: "Keine Vorschläge von Maria.",
+          markDone: "Erledigt",
+          reopen: "Wieder öffnen",
+          delete: "Löschen",
+          loading: "To-dos werden geladen…",
+          failed: "To-dos konnten nicht geladen werden.",
+          reminderTitle: "Denk daran",
+          reminderClose: "Schließen",
+        },
       };
     case "en":
       return {
@@ -535,6 +589,7 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         putAwayAria: (title) => `Put away ${title}`,
         aboutNoorie: "About Noorie",
         hideNotes: "Hide notes",
+        todosNav: "To-dos",
         edit: "Edit",
         tryAgain: "Try again",
         attach: "Attach",
@@ -578,6 +633,32 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         updateApp: "Update Sunshine",
         installApp: "Install Sunshine",
         dismissInstall: "Not now",
+        todos: {
+          title: "To-dos",
+          back: "Back to chat",
+          open: "Open",
+          done: "Done",
+          suggested: "Maria suggested",
+          add: "Add",
+          placeholder: "New to-do…",
+          dueOptional: "Due (optional)",
+          recurrence: "Repeat",
+          none: "Once",
+          daily: "Daily",
+          weekly: "Weekly",
+          accept: "Accept",
+          dismiss: "Dismiss",
+          emptyOpen: "No open to-dos yet.",
+          emptyDone: "Nothing done yet.",
+          emptySuggested: "No suggestions from Maria.",
+          markDone: "Done",
+          reopen: "Reopen",
+          delete: "Delete",
+          loading: "Loading to-dos…",
+          failed: "Could not load to-dos.",
+          reminderTitle: "Remember this",
+          reminderClose: "Close",
+        },
       };
     default: {
       const exhaustive: never = lang;

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   useCallback,
   useEffect,
@@ -10,6 +11,7 @@ import {
 } from "react";
 import {
   Archive,
+  ListTodo,
   Menu,
   Mic,
   MicOff,
@@ -28,6 +30,7 @@ import { SlideDeckView } from "@/components/slide-deck";
 import { SunLogo } from "@/components/sun-logo";
 import { SurpriseOverlay } from "@/components/surprise-overlay";
 import { AppInstall } from "@/components/app-install";
+import { TodoReminder } from "@/components/todo-reminder";
 import { WaterReminder } from "@/components/water-reminder";
 import { WhatsNewOverlay } from "@/components/whats-new-overlay";
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
@@ -58,6 +61,12 @@ import {
 } from "@/lib/language";
 import { needsWebLookup } from "@/lib/model-pick";
 import { parseAssistantReply } from "@/lib/parse-reply";
+import {
+  applyTodoActions,
+  fetchTodos,
+  formatTodosForPrompt,
+  type SunshineTodo,
+} from "@/lib/todos";
 import {
   addBacklogWishes,
   loadActiveChatId,
@@ -151,9 +160,11 @@ export function SunshineApp() {
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const [voiceLang, setVoiceLang] = useState<ReplyLanguage | null>(null);
   const [waterShowing, setWaterShowing] = useState(false);
+  const [todoReminderShowing, setTodoReminderShowing] = useState(false);
   const [whatsNewShowing, setWhatsNewShowing] = useState(false);
   const [previewSurprise, setPreviewSurprise] = useState<string | null>(null);
   const [cloudHydrated, setCloudHydrated] = useState(false);
+  const [todos, setTodos] = useState<SunshineTodo[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<{ stop: () => void } | null>(null);
@@ -276,6 +287,13 @@ export function SunshineApp() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chats, activeId, sending]);
+
+  useEffect(() => {
+    if (!ready) return;
+    void fetchTodos()
+      .then(setTodos)
+      .catch(() => setTodos([]));
+  }, [ready]);
 
   const active = useMemo(
     () => chats.find((c) => c.id === activeId) ?? null,
@@ -454,6 +472,7 @@ export function SunshineApp() {
           })),
           systemPrompt: settings.systemPrompt,
           notesDocument: notesToDocument(notes),
+          todosDocument: formatTodosForPrompt(todos),
           apiKey: settings.mistralApiKey || undefined,
           attachments: filesForRequest,
           lang: replyLanguage,
@@ -491,6 +510,14 @@ export function SunshineApp() {
       const parsed = parseAssistantReply(full);
       if (parsed.backlogItems?.length) {
         addBacklogWishes(parsed.backlogItems, "chat");
+      }
+      if (parsed.todoActions?.length) {
+        try {
+          const nextTodos = await applyTodoActions(parsed.todoActions);
+          setTodos(nextTodos);
+        } catch {
+          /* keep chatting if todo sync fails */
+        }
       }
 
       let replyText = parsed.text || full;
@@ -905,6 +932,14 @@ export function SunshineApp() {
         >
           {copy.aboutNoorie}
         </Button>
+        <Link
+          href="/todos"
+          className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-rapunzel-ink hover:bg-white/50"
+          onClick={() => setSidebarOpen(false)}
+        >
+          <ListTodo className="size-4 text-rapunzel-gold" />
+          {copy.todosNav}
+        </Link>
       </div>
     </aside>
   );
@@ -1274,11 +1309,16 @@ export function SunshineApp() {
       <AppInstall lang={activeLanguage} />
       <WaterReminder
         lang={activeLanguage}
-        paused={whatsNewShowing}
+        paused={whatsNewShowing || todoReminderShowing}
         onShowingChange={setWaterShowing}
       />
+      <TodoReminder
+        lang={activeLanguage}
+        paused={whatsNewShowing || waterShowing}
+        onShowingChange={setTodoReminderShowing}
+      />
       <SurpriseOverlay
-        waterShowing={waterShowing || whatsNewShowing}
+        waterShowing={waterShowing || whatsNewShowing || todoReminderShowing}
         previewLine={previewSurprise}
         onPreviewConsumed={() => setPreviewSurprise(null)}
       />
