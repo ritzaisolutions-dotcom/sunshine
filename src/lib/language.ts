@@ -2,6 +2,17 @@ export type ReplyLanguage = "de" | "en";
 
 export type ChatActivity = "writing" | "looking" | "drawing" | "error";
 
+export type FollowUpKind = "practice" | "slides" | "quiz";
+
+export type NotesFieldKey =
+  | "whoSheIs"
+  | "howSheLikesToLearn"
+  | "goals"
+  | "inProgress"
+  | "alreadyUnderstands"
+  | "getsStuckOn"
+  | "littleThings";
+
 export type ChatCopy = {
   greeting: string;
   ideas: readonly string[];
@@ -15,6 +26,46 @@ export type ChatCopy = {
   voiceUnsupported: string;
   speakUnsupported: string;
   header: string;
+  newChat: string;
+  chats: string;
+  putAway: string;
+  putAwayAria: (title: string) => string;
+  aboutNoorie: string;
+  hideNotes: string;
+  studySheet: string;
+  edit: string;
+  tryAgain: string;
+  attach: string;
+  closeMenu: string;
+  opening: string;
+  tagline: string;
+  lastUpdated: (when: string) => string;
+  notesLabels: Record<NotesFieldKey, string>;
+  followUps: readonly { kind: FollowUpKind; label: string; prompt: string }[];
+  searchFailed: string;
+  pictureFailed: string;
+  streamFailed: string;
+  somethingWrong: string;
+  waterPrompt: string;
+  waterDrunk: string;
+  waterClose: string;
+  sync: {
+    title: string;
+    blurb: string;
+    placeholder: string;
+    save: string;
+    load: string;
+    newCode: string;
+    forget: string;
+    needKey: string;
+    noVault: string;
+    pulled: string;
+    created: string;
+    saved: string;
+    cleared: string;
+    failed: string;
+    missingEnv: string;
+  };
 };
 
 const GERMAN_WORDS = new Set([
@@ -211,6 +262,11 @@ const WEAK_ENGLISH_WORDS = new Set([
   "be",
 ]);
 
+const NEW_CHAT_TITLES = {
+  de: "Neuer Chat",
+  en: "New chat",
+} as const;
+
 type LangScore = {
   de: number;
   en: number;
@@ -327,6 +383,58 @@ export function isOpeningGreeting(text: string): boolean {
   return text === openingGreeting("de") || text === openingGreeting("en");
 }
 
+export function newChatTitle(lang: ReplyLanguage): string {
+  return NEW_CHAT_TITLES[lang];
+}
+
+export function isNewChatTitle(title: string): boolean {
+  return title === NEW_CHAT_TITLES.de || title === NEW_CHAT_TITLES.en;
+}
+
+/** Short topic title from Noorie's first message. */
+export function provisionalChatTitle(
+  text: string,
+  lang: ReplyLanguage,
+  fallbackFileName?: string
+): string {
+  const cleaned = text
+    .trim()
+    .replace(/^(attached files)$/i, "")
+    .replace(
+      /^(hallo|hi|hey|hello)\s+(maria(\s+sunshine)?|noorie)\b[,!.:]?\s*/i,
+      ""
+    )
+    .replace(/^(maria(\s+sunshine)?)\b[,!.:]?\s*/i, "")
+    .replace(
+      /^(erklär mir|erklaer mir|erkläre mir|explain|tell me|can you|kannst du|könntest du|koenntest du)\b[,!.:]?\s*/i,
+      ""
+    )
+    .replace(/^(bitte|please)\b[,!.:]?\s*/i, "")
+    .replace(/^(ganz kurz|kurz|briefly|very briefly)\b[,!.:]?\s*/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const source = cleaned || fallbackFileName?.trim() || "";
+  if (!source) return newChatTitle(lang);
+
+  const words = source.split(/\s+/).filter(Boolean).slice(0, 4);
+  let title = words.join(" ");
+  title = title.replace(/[?.!,;:]+$/g, "").trim();
+  if (title.length > 36) title = `${title.slice(0, 33).trimEnd()}…`;
+  return title || newChatTitle(lang);
+}
+
+export function canReplaceChatTitle(
+  currentTitle: string,
+  provisionalTitle: string
+): boolean {
+  return (
+    isNewChatTitle(currentTitle) ||
+    currentTitle === provisionalTitle ||
+    currentTitle.trim() === ""
+  );
+}
+
 export function chatActivityLabel(
   lang: ReplyLanguage,
   activity: ChatActivity
@@ -371,6 +479,74 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         speakUnsupported:
           "Vorlesen funktioniert in diesem Browser nicht.",
         header: "Mit Maria Sunshine sprechen",
+        newChat: "Neuer Chat",
+        chats: "Chats",
+        putAway: "Weggelegt",
+        putAwayAria: (title) => `${title} weglegen`,
+        aboutNoorie: "Über Noorie",
+        hideNotes: "Notizen aus",
+        studySheet: "Lernblatt",
+        edit: "Bearbeiten",
+        tryAgain: "Nochmal",
+        attach: "Anhang",
+        closeMenu: "Menü schließen",
+        opening: "Sunshine",
+        tagline: "Maria Sunshine für Noorie",
+        lastUpdated: (when) => `Zuletzt: ${when}`,
+        notesLabels: {
+          whoSheIs: "Wer sie ist",
+          howSheLikesToLearn: "So lernt sie gern",
+          goals: "Ziele",
+          inProgress: "Gerade in Arbeit",
+          alreadyUnderstands: "Das kann sie schon",
+          getsStuckOn: "Hier wird sie unsicher",
+          littleThings: "Kleine Dinge zum Merken",
+        },
+        followUps: [
+          {
+            kind: "practice",
+            label: "Üb eine Aufgabe",
+            prompt: "Gib mir bitte eine kurze Übungsaufgabe dazu.",
+          },
+          {
+            kind: "slides",
+            label: "Mach Folien",
+            prompt: "Mach bitte einfache Folien dazu.",
+          },
+          {
+            kind: "quiz",
+            label: "Frag mich ab",
+            prompt: "Frag mich bitte dazu ab.",
+          },
+        ],
+        searchFailed: "Maria konnte das gerade nicht nachschauen.",
+        pictureFailed: "Das Bild ist nicht angekommen.",
+        streamFailed: "Keine Antwort gekommen.",
+        somethingWrong: "Etwas ist schiefgelaufen.",
+        waterPrompt: "Zeit für einen Schluck Wasser",
+        waterDrunk: "Getrunken",
+        waterClose: "Schließen",
+        sync: {
+          title: "Folge mir",
+          blurb:
+            "Derselbe Sync-Code auf Telefon und Laptop teilt Chats und Über Noorie.",
+          placeholder: "Sync-Code",
+          save: "In die Cloud",
+          load: "Laden",
+          newCode: "Neuer Code",
+          forget: "Vergessen",
+          needKey: "Gib zuerst einen Sync-Code ein oder erstelle einen.",
+          noVault:
+            "Für diesen Code gibt es noch keinen Vault. Speichere zuerst von diesem Gerät.",
+          pulled: "Chats und Über Noorie aus der Cloud geladen.",
+          created:
+            "Neuer Sync-Code ist bereit. Speichere ihn, öffne Sunshine auf einem anderen Gerät und füge ihn ein.",
+          saved: "Chats und Über Noorie in die Cloud gespeichert.",
+          cleared: "Lokaler Sync-Code gelöscht.",
+          failed: "Sync fehlgeschlagen.",
+          missingEnv:
+            "Cloud-Sync braucht NEXT_PUBLIC_SUPABASE_URL und NEXT_PUBLIC_SUPABASE_ANON_KEY auf dem Server.",
+        },
       };
     case "en":
       return {
@@ -392,6 +568,73 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         voiceUnsupported: "Voice input is not supported in this browser.",
         speakUnsupported: "Speaking aloud is not supported in this browser.",
         header: "Chat with Maria Sunshine",
+        newChat: "New chat",
+        chats: "Chats",
+        putAway: "Put away",
+        putAwayAria: (title) => `Put away ${title}`,
+        aboutNoorie: "About Noorie",
+        hideNotes: "Hide notes",
+        studySheet: "Study sheet",
+        edit: "Edit",
+        tryAgain: "Try again",
+        attach: "Attach",
+        closeMenu: "Close menu",
+        opening: "Sunshine",
+        tagline: "Maria Sunshine for Noorie",
+        lastUpdated: (when) => `Last updated: ${when}`,
+        notesLabels: {
+          whoSheIs: "Who she is",
+          howSheLikesToLearn: "How she likes to learn",
+          goals: "Goals",
+          inProgress: "In progress",
+          alreadyUnderstands: "Already understands",
+          getsStuckOn: "Gets stuck on",
+          littleThings: "Little things to remember",
+        },
+        followUps: [
+          {
+            kind: "practice",
+            label: "Practice a question",
+            prompt: "Please give me a short practice question about this.",
+          },
+          {
+            kind: "slides",
+            label: "Make slides",
+            prompt: "Please make simple slides about this.",
+          },
+          {
+            kind: "quiz",
+            label: "Quiz me",
+            prompt: "Please quiz me about this.",
+          },
+        ],
+        searchFailed: "Maria could not look that up right now.",
+        pictureFailed: "The picture did not come back.",
+        streamFailed: "No response stream.",
+        somethingWrong: "Something went wrong.",
+        waterPrompt: "Time for a sip of water",
+        waterDrunk: "Drunk",
+        waterClose: "Close",
+        sync: {
+          title: "Follow me",
+          blurb:
+            "Same sync code on phone and laptop shares chats and About Noorie.",
+          placeholder: "Sync code",
+          save: "Save to cloud",
+          load: "Load",
+          newCode: "New code",
+          forget: "Forget",
+          needKey: "Enter or create a sync code first.",
+          noVault: "No vault yet for this code. Save from this phone first.",
+          pulled: "Pulled chats and About Noorie from the cloud.",
+          created:
+            "New sync code ready. Save it, then open Sunshine on another device and paste it.",
+          saved: "Saved chats and About Noorie to the cloud.",
+          cleared: "Cleared local sync code.",
+          failed: "Sync failed.",
+          missingEnv:
+            "Cloud sync needs NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY on the server.",
+        },
       };
     default: {
       const exhaustive: never = lang;

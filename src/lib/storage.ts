@@ -5,6 +5,7 @@ import {
   EMPTY_NOTES,
   NourieNotes,
 } from "@/lib/types";
+import type { ReplyLanguage } from "@/lib/language";
 import { resolveSystemPrompt } from "@/lib/prompts";
 
 const KEYS = {
@@ -17,10 +18,11 @@ const KEYS = {
   whatsNewSeen: "sunshine.whatsNewSeen",
   goodnotes: "sunshine.goodnotesConnected",
   backlog: "sunshine.backlog",
+  voiceLang: "sunshine.voiceLang",
 } as const;
 
 /** Bump this when shipping a new one-time “What’s new” card. */
-export const WHATS_NEW_VERSION = "2026-10-language";
+export const WHATS_NEW_VERSION = "2026-10-ux-chrome";
 
 function canUseStorage(): boolean {
   return typeof window !== "undefined" && typeof localStorage !== "undefined";
@@ -131,6 +133,18 @@ export function loadWhatsNewSeen(): string | null {
 export function saveWhatsNewSeen(version: string) {
   if (!canUseStorage()) return;
   localStorage.setItem(KEYS.whatsNewSeen, version);
+}
+
+export function loadVoiceLang(): ReplyLanguage | null {
+  if (!canUseStorage()) return null;
+  const raw = localStorage.getItem(KEYS.voiceLang);
+  if (raw === "de" || raw === "en") return raw;
+  return null;
+}
+
+export function saveVoiceLang(lang: ReplyLanguage) {
+  if (!canUseStorage()) return;
+  localStorage.setItem(KEYS.voiceLang, lang);
 }
 
 export function loadGoodnotesConnected(): boolean {

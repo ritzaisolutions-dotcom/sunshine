@@ -36,13 +36,18 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import {
   browserReplyLanguage,
+  canReplaceChatTitle,
   chatActivityLabel,
   chatCopy,
   detectReplyLanguage,
   isOpeningGreeting,
+  isNewChatTitle,
+  newChatTitle,
   openingGreeting,
+  provisionalChatTitle,
   resolveReplyLanguage,
   speechLocale,
+  type NotesFieldKey,
   type ReplyLanguage,
 } from "@/lib/language";
 import { needsWebLookup } from "@/lib/model-pick";
@@ -53,9 +58,11 @@ import {
   loadChats,
   loadNotes,
   loadSettings,
+  loadVoiceLang,
   saveActiveChatId,
   saveChats,
   saveNotes,
+  saveVoiceLang,
 } from "@/lib/storage";
 import {
   AttachmentMeta,
@@ -89,11 +96,14 @@ function formatTime(iso: string) {
   }
 }
 
-function createThread(seed?: ChatMessage[]): ChatThread {
+function createThread(
+  seed?: ChatMessage[],
+  lang: ReplyLanguage = browserReplyLanguage()
+): ChatThread {
   const now = new Date().toISOString();
   return {
     id: newId(),
-    title: "New chat",
+    title: newChatTitle(lang),
     messages: seed ?? [],
     updatedAt: now,
     archived: false,
@@ -133,6 +143,7 @@ export function SunshineApp() {
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [listening, setListening] = useState(false);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
+  const [voiceLang, setVoiceLang] = useState<ReplyLanguage | null>(null);
   const [waterShowing, setWaterShowing] = useState(false);
   const [whatsNewShowing, setWhatsNewShowing] = useState(false);
   const [previewSurprise, setPreviewSurprise] = useState<string | null>(null);
@@ -142,25 +153,30 @@ export function SunshineApp() {
 
   useEffect(() => {
     const stored = loadChats();
+    const bootLang = browserReplyLanguage();
     if (stored.length) {
       setChats(stored);
       setActiveId(loadActiveChatId() ?? stored[0]?.id ?? null);
     } else {
-      const first = createThread([
-        {
-          id: "demo-1",
-          role: "assistant",
-          content: openingGreeting(browserReplyLanguage()),
-          createdAt: new Date().toISOString(),
-          status: "Ready",
-        },
-      ]);
+      const first = createThread(
+        [
+          {
+            id: "demo-1",
+            role: "assistant",
+            content: openingGreeting(bootLang),
+            createdAt: new Date().toISOString(),
+            status: "Ready",
+          },
+        ],
+        bootLang
+      );
       setChats([first]);
       setActiveId(first.id);
       saveChats([first]);
       saveActiveChatId(first.id);
     }
     setNotes(loadNotes());
+    setVoiceLang(loadVoiceLang());
     setReady(true);
 
     const params = new URLSearchParams(window.location.search);
@@ -225,11 +241,16 @@ export function SunshineApp() {
   );
 
   const startNewChat = () => {
-    const thread = createThread();
+    const thread = createThread(undefined, activeLanguage);
     setChats((prev) => [thread, ...prev]);
     setActiveId(thread.id);
     setSidebarOpen(false);
     setError(null);
+  };
+
+  const pickVoiceLang = (lang: ReplyLanguage) => {
+    setVoiceLang(lang);
+    saveVoiceLang(lang);
   };
 
   const archiveChat = (id: string) => {
@@ -265,7 +286,7 @@ export function SunshineApp() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      setError(chatCopy(resolveReplyLanguage(userSamples(active?.messages ?? []))).voiceUnsupported);
+      setError(copy.voiceUnsupported);
       return;
     }
     if (listening && recognitionRef.current) {
@@ -273,10 +294,12 @@ export function SunshineApp() {
       setListening(false);
       return;
     }
-    const listenLanguage = resolveReplyLanguage([
-      ...userSamples(active?.messages ?? []),
-      draft,
-    ]);
+    const listenLanguage =
+      voiceLang ??
+      resolveReplyLanguage([
+        ...userSamples(active?.messages ?? []),
+        draft,
+      ]);
     const recognition = new SpeechRecognition();
     recognition.lang = speechLocale(listenLanguage);
     recognition.interimResults = false;
@@ -358,11 +381,11 @@ export function SunshineApp() {
         const data = (await res.json().catch(() => null)) as {
           error?: string;
         } | null;
-        throw new Error(data?.error || `Request failed (${res.status})`);
+        throw new Error(data?.error || `${turnCopy.snag} (${res.status})`);
       }
 
       const reader = res.body?.getReader();
-      if (!reader) throw new Error("No response stream.");
+      if (!reader) throw new Error(turnCopy.streamFailed);
 
       const decoder = new TextDecoder();
       let full = "";
@@ -425,9 +448,7 @@ export function SunshineApp() {
           error?: string;
         } | null;
         if (!searchRes.ok || !searchData?.text) {
-          throw new Error(
-            searchData?.error || "Maria could not look that up right now."
-          );
+          throw new Error(searchData?.error || turnCopy.searchFailed);
         }
         const warm = parsed.text?.trim();
         replyText = warm
@@ -467,28 +488,39 @@ export function SunshineApp() {
           error?: string;
         } | null;
         if (!imageRes.ok || !imageData?.src) {
-          throw new Error(imageData?.error || "The picture did not come back.");
+          throw new Error(imageData?.error || turnCopy.pictureFailed);
         }
         drawn = { src: imageData.src, alt: imageData.alt || parsed.imagePrompt };
       }
 
-      updateActive((thread) => ({
-        ...thread,
-        updatedAt: new Date().toISOString(),
-        messages: thread.messages.map((m) =>
-          m.id === assistantId
-            ? {
-                ...m,
-                content: replyText,
-                deck: parsed.deck,
-                diagram: parsed.diagram,
-                image: drawn,
-                sources,
-                status: "Done",
-              }
-            : m
-        ),
-      }));
+      updateActive((thread) => {
+        const provisional = provisionalChatTitle(
+          userContentForMemory,
+          replyLanguage
+        );
+        const nextTitle =
+          parsed.title && canReplaceChatTitle(thread.title, provisional)
+            ? parsed.title
+            : thread.title;
+        return {
+          ...thread,
+          title: nextTitle,
+          updatedAt: new Date().toISOString(),
+          messages: thread.messages.map((m) =>
+            m.id === assistantId
+              ? {
+                  ...m,
+                  content: replyText,
+                  deck: parsed.deck,
+                  diagram: parsed.diagram,
+                  image: drawn,
+                  sources,
+                  status: "Done",
+                }
+              : m
+          ),
+        };
+      });
 
       const transcript = [
         `Noorie: ${userContentForMemory}`,
@@ -528,7 +560,7 @@ export function SunshineApp() {
       }
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Something went wrong.";
+        err instanceof Error ? err.message : turnCopy.somethingWrong;
       setError(message);
       updateActive((thread) => ({
         ...thread,
@@ -547,13 +579,15 @@ export function SunshineApp() {
     }
   };
 
-  const sendMessage = async () => {
+  const sendMessage = async (overrideText?: string) => {
     if (!active || sending) return;
-    const text = draft.trim();
-    if (!text && !pendingFiles.length) return;
+    const fromDraft = overrideText === undefined;
+    const text = (overrideText ?? draft).trim();
+    const filesForRequest = fromDraft ? pendingFiles : [];
+    if (!text && !filesForRequest.length) return;
 
     const now = new Date().toISOString();
-    const attachmentMeta: AttachmentMeta[] = pendingFiles.map((f) => ({
+    const attachmentMeta: AttachmentMeta[] = filesForRequest.map((f) => ({
       name: f.name,
       mimeType: f.mimeType,
       size: f.size,
@@ -568,15 +602,20 @@ export function SunshineApp() {
     };
 
     const assistantId = newId();
-    const title =
-      active.messages.length === 0 || active.title === "New chat"
-        ? (text || attachmentMeta[0]?.name || "New chat").slice(0, 48)
-        : active.title;
-
     const replyLanguage = resolveReplyLanguage([
       ...userSamples(active.messages),
       text,
     ]);
+    const provisional = provisionalChatTitle(
+      text,
+      replyLanguage,
+      attachmentMeta[0]?.name
+    );
+    const title =
+      isNewChatTitle(active.title) || active.messages.every((m) => m.role !== "user")
+        ? provisional
+        : active.title;
+
     const baseMessages = withOpeningGreeting(active.messages, replyLanguage);
     const history = [...baseMessages, userMessage];
 
@@ -597,9 +636,10 @@ export function SunshineApp() {
       ],
     }));
 
-    setDraft("");
-    const filesForRequest = pendingFiles;
-    setPendingFiles([]);
+    if (fromDraft) {
+      setDraft("");
+      setPendingFiles([]);
+    }
 
     await runAssistantTurn({
       history,
@@ -701,7 +741,7 @@ export function SunshineApp() {
           <p className="font-[family-name:var(--font-fraunces)] text-2xl font-medium tracking-tight text-rapunzel-plum">
             Sunshine
           </p>
-          <p className="text-xs text-rapunzel-plum/75">Maria Sunshine for Noorie</p>
+          <p className="text-xs text-rapunzel-plum/75">{copy.tagline}</p>
         </div>
       </div>
       <div className="relative z-10 px-3">
@@ -711,12 +751,12 @@ export function SunshineApp() {
           className="w-full rounded-2xl bg-rapunzel-gold text-rapunzel-ink hover:bg-rapunzel-gold-deep"
         >
           <Plus className="size-4" />
-          New chat
+          {copy.newChat}
         </Button>
       </div>
       <div className="relative z-10 mt-4 flex-1 space-y-1 overflow-y-auto px-2 pb-4">
         <p className="px-2 text-[10px] uppercase tracking-widest text-rapunzel-plum/70">
-          Chats
+          {copy.chats}
         </p>
         {activeChats.map((chat) => (
           <div
@@ -738,7 +778,7 @@ export function SunshineApp() {
             </button>
             <button
               type="button"
-              aria-label={`Put away ${chat.title}`}
+              aria-label={copy.putAwayAria(chat.title)}
               onClick={() => archiveChat(chat.id)}
               className="grid size-8 place-items-center rounded-lg text-rapunzel-plum hover:bg-white/70"
             >
@@ -749,7 +789,7 @@ export function SunshineApp() {
         {archivedChats.length > 0 && (
           <>
             <p className="mt-4 px-2 text-[10px] uppercase tracking-widest text-rapunzel-plum/70">
-              Put away
+              {copy.putAway}
             </p>
             {archivedChats.map((chat) => (
               <button
@@ -780,19 +820,20 @@ export function SunshineApp() {
             setSidebarOpen(false);
           }}
         >
-          About Noorie
+          {copy.aboutNoorie}
         </Button>
         <Link
           href="/study-sheet"
           className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-rapunzel-ink hover:bg-white/50"
         >
           <FileText className="size-4 text-rapunzel-gold" />
-          Study sheet
+          {copy.studySheet}
         </Link>
       </div>
       <CloudSyncPanel
         chats={chats}
         notes={notes}
+        lang={activeLanguage}
         onPulled={(nextChats, nextNotes) => {
           setNotes(nextNotes);
           if (nextChats.length) {
@@ -815,7 +856,7 @@ export function SunshineApp() {
           <button
             type="button"
             className="absolute inset-0 bg-rapunzel-plum/35"
-            aria-label="Close menu"
+            aria-label={copy.closeMenu}
             onClick={() => setSidebarOpen(false)}
           />
           <div className="relative z-10 h-full">{Sidebar}</div>
@@ -849,7 +890,7 @@ export function SunshineApp() {
             className="rounded-full border-rapunzel-gold bg-rapunzel-gold/25 text-rapunzel-ink hover:bg-rapunzel-gold/40"
             onClick={() => setShowNotes((v) => !v)}
           >
-            {showNotes ? "Hide notes" : "About Noorie"}
+            {showNotes ? copy.hideNotes : copy.aboutNoorie}
           </Button>
         </header>
 
@@ -977,34 +1018,50 @@ export function SunshineApp() {
                                 className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] text-rapunzel-plum hover:bg-white/70"
                               >
                                 <Pencil className="size-3" />
-                                Edit
+                                {copy.edit}
                               </button>
                             </MessageFooter>
                           ) : null}
                           {isLastAssistant &&
                           message.content &&
                           !sending ? (
-                            <MessageFooter className="gap-2">
-                              <button
-                                type="button"
-                                onClick={() => void regenerateLast()}
-                                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] text-rapunzel-plum hover:bg-white/70"
-                              >
-                                <RefreshCw className="size-3" />
-                                Try again
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  speakMessage(message.id, message.content)
-                                }
-                                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] text-rapunzel-plum hover:bg-white/70"
-                              >
-                                <Volume2 className="size-3" />
-                                {speakingId === message.id
-                                  ? spokenCopy.stop
-                                  : spokenCopy.speak}
-                              </button>
+                            <MessageFooter className="flex-col items-start gap-2">
+                              <div className="flex flex-wrap gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => void regenerateLast()}
+                                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] text-rapunzel-plum hover:bg-white/70"
+                                >
+                                  <RefreshCw className="size-3" />
+                                  {copy.tryAgain}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    speakMessage(message.id, message.content)
+                                  }
+                                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] text-rapunzel-plum hover:bg-white/70"
+                                >
+                                  <Volume2 className="size-3" />
+                                  {speakingId === message.id
+                                    ? spokenCopy.stop
+                                    : spokenCopy.speak}
+                                </button>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {copy.followUps.map((followUp) => (
+                                  <button
+                                    key={followUp.kind}
+                                    type="button"
+                                    onClick={() =>
+                                      void sendMessage(followUp.prompt)
+                                    }
+                                    className="rounded-full border border-rapunzel-gold/60 bg-rapunzel-gold/25 px-2.5 py-1 text-[11px] text-rapunzel-ink hover:bg-rapunzel-gold/45"
+                                  >
+                                    {followUp.label}
+                                  </button>
+                                ))}
+                              </div>
                             </MessageFooter>
                           ) : null}
                           {!isUser &&
@@ -1065,10 +1122,28 @@ export function SunshineApp() {
                   variant="ghost"
                   className="rounded-full text-rapunzel-plum"
                   onClick={() => fileRef.current?.click()}
-                  title="Attach"
+                  title={copy.attach}
                 >
                   <Paperclip className="size-5" />
                 </Button>
+                <div className="flex items-center gap-0.5 rounded-full border border-border/70 bg-white/50 p-0.5">
+                  {(["de", "en"] as const).map((code) => (
+                    <button
+                      key={code}
+                      type="button"
+                      onClick={() => pickVoiceLang(code)}
+                      className={cn(
+                        "rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                        (voiceLang ?? activeLanguage) === code
+                          ? "bg-rapunzel-gold text-rapunzel-ink"
+                          : "text-rapunzel-plum/70 hover:bg-white"
+                      )}
+                      title={copy.voiceTitle}
+                    >
+                      {code}
+                    </button>
+                  ))}
+                </div>
                 <Button
                   type="button"
                   size="icon"
@@ -1119,9 +1194,13 @@ export function SunshineApp() {
           {showNotes && (
             <aside className="sunshine-panel w-full max-w-sm border-l border-border p-4 md:block">
               <h2 className="mb-3 text-lg font-semibold text-rapunzel-plum">
-                About Noorie
+                {copy.aboutNoorie}
               </h2>
-              <NotesEditor notes={notes} onChange={setNotes} />
+              <NotesEditor
+                notes={notes}
+                lang={activeLanguage}
+                onChange={setNotes}
+              />
             </aside>
           )}
         </div>
@@ -1129,6 +1208,7 @@ export function SunshineApp() {
 
       <WhatsNewOverlay onShowingChange={setWhatsNewShowing} />
       <WaterReminder
+        lang={activeLanguage}
         paused={whatsNewShowing}
         onShowingChange={setWaterShowing}
       />
@@ -1143,17 +1223,17 @@ export function SunshineApp() {
 
 function NotesEditor({
   notes,
+  lang,
   onChange,
 }: {
   notes: NourieNotes;
+  lang: ReplyLanguage;
   onChange: (n: NourieNotes) => void;
 }) {
-  const field = (
-    key: keyof Omit<NourieNotes, "lastUpdated">,
-    label: string
-  ) => (
+  const copy = chatCopy(lang);
+  const field = (key: NotesFieldKey) => (
     <label className="mb-3 block text-xs font-medium text-rapunzel-plum">
-      {label}
+      {copy.notesLabels[key]}
       <Textarea
         value={notes[key]}
         onChange={(e) => onChange({ ...notes, [key]: e.target.value })}
@@ -1166,16 +1246,16 @@ function NotesEditor({
     <div className="max-h-[70vh] overflow-y-auto pr-1">
       {notes.lastUpdated ? (
         <p className="mb-3 text-[11px] text-rapunzel-ink/50">
-          Last updated: {new Date(notes.lastUpdated).toLocaleString()}
+          {copy.lastUpdated(new Date(notes.lastUpdated).toLocaleString())}
         </p>
       ) : null}
-      {field("whoSheIs", "Who she is")}
-      {field("howSheLikesToLearn", "How she likes to learn")}
-      {field("goals", "Goals")}
-      {field("inProgress", "In progress")}
-      {field("alreadyUnderstands", "Already understands")}
-      {field("getsStuckOn", "Gets stuck on")}
-      {field("littleThings", "Little things to remember")}
+      {field("whoSheIs")}
+      {field("howSheLikesToLearn")}
+      {field("goals")}
+      {field("inProgress")}
+      {field("alreadyUnderstands")}
+      {field("getsStuckOn")}
+      {field("littleThings")}
     </div>
   );
 }

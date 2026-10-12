@@ -99,6 +99,12 @@ export const BACKLOG_RULE = `If Noorie asks for any change, upgrade, fix, or new
 \`\`\`
 Do not invent wishes. Ordinary learning requests are not backlog items.`;
 
+export const TITLE_RULE = `When this chat still needs a short topic title (first real learning question in the thread), end your reply with a fenced block exactly like this:
+\`\`\`title
+{"title":"Short topic in Noorie's language"}
+\`\`\`
+Keep the title to at most four words. No greeting words. Do not send a title block on later turns once the chat already has a real topic.`;
+
 export const MEMORY_MERGE_PROMPT = `You update a living memory document about Noorie. You ADD durable facts from the latest chat. You never invent. You never delete existing lines. You never replace the document with a shorter rewrite.
 
 Return ONLY valid JSON with these string fields:

@@ -11,25 +11,32 @@ import {
   pushCloudVault,
   saveSyncKey,
 } from "@/lib/cloud-sync";
+import { chatCopy, type ReplyLanguage } from "@/lib/language";
 import { cloudSyncConfigured } from "@/lib/supabase";
 import { ChatThread, NourieNotes } from "@/lib/types";
 
 type CloudSyncPanelProps = {
   chats: ChatThread[];
   notes: NourieNotes;
+  lang: ReplyLanguage;
   onPulled: (chats: ChatThread[], notes: NourieNotes) => void;
 };
 
-export function CloudSyncPanel({ chats, notes, onPulled }: CloudSyncPanelProps) {
+export function CloudSyncPanel({
+  chats,
+  notes,
+  lang,
+  onPulled,
+}: CloudSyncPanelProps) {
   const [key, setKey] = useState(() => loadSyncKey() ?? "");
   const [busy, setBusy] = useState(false);
   const [flash, setFlash] = useState("");
+  const copy = chatCopy(lang).sync;
 
   if (!cloudSyncConfigured()) {
     return (
       <p className="px-3 py-2 text-[11px] leading-snug text-rapunzel-plum/70">
-        Cloud sync needs NEXT_PUBLIC_SUPABASE_URL and
-        NEXT_PUBLIC_SUPABASE_ANON_KEY on the server.
+        {copy.missingEnv}
       </p>
     );
   }
@@ -49,28 +56,24 @@ export function CloudSyncPanel({ chats, notes, onPulled }: CloudSyncPanelProps) 
         remember(syncKey);
       }
       if (syncKey.length < 8) {
-        throw new Error("Enter or create a sync code first.");
+        throw new Error(copy.needKey);
       }
       if (action === "pull") {
         const result = await pullCloudVault(syncKey);
         if (!result.found) {
-          setFlash("No vault yet for this code. Save from this phone first.");
+          setFlash(copy.noVault);
           return;
         }
         onPulled(result.chats, result.notes);
         saveSyncKey(syncKey);
-        setFlash("Pulled chats and About Noorie from the cloud.");
+        setFlash(copy.pulled);
         return;
       }
       await pushCloudVault(syncKey, chats, notes);
       saveSyncKey(syncKey);
-      setFlash(
-        action === "create"
-          ? "New sync code ready. Save it, then open Sunshine on another device and paste it."
-          : "Saved chats and About Noorie to the cloud."
-      );
+      setFlash(action === "create" ? copy.created : copy.saved);
     } catch (error) {
-      setFlash(error instanceof Error ? error.message : "Sync failed.");
+      setFlash(error instanceof Error ? error.message : copy.failed);
     } finally {
       setBusy(false);
     }
@@ -79,15 +82,13 @@ export function CloudSyncPanel({ chats, notes, onPulled }: CloudSyncPanelProps) 
   return (
     <div className="space-y-2 border-t border-border p-3">
       <p className="text-[10px] uppercase tracking-widest text-rapunzel-plum/70">
-        Follow me
+        {copy.title}
       </p>
-      <p className="text-[11px] leading-snug text-rapunzel-ink/70">
-        Same sync code on phone and laptop shares chats and About Noorie.
-      </p>
+      <p className="text-[11px] leading-snug text-rapunzel-ink/70">{copy.blurb}</p>
       <Input
         value={key}
         onChange={(e) => remember(e.target.value)}
-        placeholder="Sync code"
+        placeholder={copy.placeholder}
         className="rounded-xl border-border bg-card/90 text-xs"
       />
       <div className="flex flex-wrap gap-1.5">
@@ -98,7 +99,7 @@ export function CloudSyncPanel({ chats, notes, onPulled }: CloudSyncPanelProps) 
           className="rounded-full bg-rapunzel-gold text-rapunzel-ink hover:bg-rapunzel-gold-deep"
           onClick={() => void run("push")}
         >
-          Save to cloud
+          {copy.save}
         </Button>
         <Button
           type="button"
@@ -108,7 +109,7 @@ export function CloudSyncPanel({ chats, notes, onPulled }: CloudSyncPanelProps) 
           className="rounded-full border-rapunzel-gold"
           onClick={() => void run("pull")}
         >
-          Load
+          {copy.load}
         </Button>
         <Button
           type="button"
@@ -118,7 +119,7 @@ export function CloudSyncPanel({ chats, notes, onPulled }: CloudSyncPanelProps) 
           className="rounded-full text-rapunzel-plum"
           onClick={() => void run("create")}
         >
-          New code
+          {copy.newCode}
         </Button>
         {key ? (
           <Button
@@ -130,10 +131,10 @@ export function CloudSyncPanel({ chats, notes, onPulled }: CloudSyncPanelProps) 
             onClick={() => {
               clearSyncKey();
               setKey("");
-              setFlash("Cleared local sync code.");
+              setFlash(copy.cleared);
             }}
           >
-            Forget
+            {copy.forget}
           </Button>
         ) : null}
       </div>

@@ -7,6 +7,7 @@ export type ParsedReply = {
   imagePrompt?: string;
   searchQuery?: string;
   backlogItems?: string[];
+  title?: string;
 };
 
 function extractFence(
@@ -92,6 +93,20 @@ export function parseAssistantReply(content: string): ParsedReply {
     }
   }
 
+  let title: string | undefined;
+  const topic = extractFence(working, "title");
+  working = topic.text;
+  if (topic.body) {
+    try {
+      const parsed = JSON.parse(topic.body) as { title?: unknown };
+      if (typeof parsed.title === "string" && parsed.title.trim()) {
+        title = parsed.title.trim().slice(0, 48);
+      }
+    } catch {
+      if (topic.body.trim()) title = topic.body.trim().slice(0, 48);
+    }
+  }
+
   return {
     text: working.trim(),
     deck,
@@ -99,5 +114,6 @@ export function parseAssistantReply(content: string): ParsedReply {
     imagePrompt,
     searchQuery,
     backlogItems,
+    title,
   };
 }

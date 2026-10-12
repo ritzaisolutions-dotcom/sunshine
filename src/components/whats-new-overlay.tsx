@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import {
   Cloud,
+  Droplets,
   ImageIcon,
   Languages,
+  Mic,
   Pencil,
   RefreshCw,
   Search,
@@ -24,22 +26,32 @@ const FEATURES = [
     icon: Languages,
     title: "German or English",
     blurb:
-      "Talk or type in German or English. Maria answers in that same language.",
+      "Buttons, notes, and Maria all follow the language you are using.",
+  },
+  {
+    icon: Mic,
+    title: "DE or EN mic",
+    blurb: "Pick DE or EN beside the mic so voice input hears you clearly.",
+  },
+  {
+    icon: Sparkles,
+    title: "Short chat titles",
+    blurb: "Chats get a tidy topic name instead of the whole first sentence.",
+  },
+  {
+    icon: RefreshCw,
+    title: "Next little task",
+    blurb: "Under a reply, tap practice, slides, or a quiz in one go.",
+  },
+  {
+    icon: Droplets,
+    title: "Quiet water nudge",
+    blurb: "A soft card asks for a sip — tap Drunk when you did.",
   },
   {
     icon: ImageIcon,
     title: "Pictures",
     blurb: "Ask Maria to draw — she makes a friendly picture for you.",
-  },
-  {
-    icon: Sparkles,
-    title: "Smarter help",
-    blurb: "Hard homework and careful writing get a stronger brain.",
-  },
-  {
-    icon: RefreshCw,
-    title: "Try again",
-    blurb: "Not quite right? Redo Maria’s latest reply in one tap.",
   },
   {
     icon: Pencil,
