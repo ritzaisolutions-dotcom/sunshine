@@ -10,6 +10,7 @@ export type SunshineTodo = {
   dueAt: string | null;
   recurrence: TodoRecurrence;
   remindedAt: string | null;
+  sortOrder: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -42,6 +43,7 @@ type DbTodo = {
   due_at?: string | null;
   recurrence?: string;
   reminded_at?: string | null;
+  sort_order?: number;
   created_at?: string;
   updated_at?: string;
 };
@@ -70,6 +72,7 @@ export function mapDbTodo(row: DbTodo): SunshineTodo | null {
     dueAt: row.due_at ?? null,
     recurrence: asRecurrence(row.recurrence),
     remindedAt: row.reminded_at ?? null,
+    sortOrder: typeof row.sort_order === "number" ? row.sort_order : 0,
     createdAt: row.created_at ?? new Date().toISOString(),
     updatedAt: row.updated_at ?? new Date().toISOString(),
   };
@@ -180,6 +183,18 @@ export async function deleteTodo(id: string): Promise<void> {
   if (!res.ok) {
     const data = (await res.json().catch(() => null)) as { error?: string } | null;
     throw new Error(data?.error || `Could not delete todo (${res.status})`);
+  }
+}
+
+export async function reorderTodos(ids: string[]): Promise<void> {
+  const res = await fetch("/api/todos", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
+  });
+  if (!res.ok) {
+    const data = (await res.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(data?.error || `Could not reorder todos (${res.status})`);
   }
 }
 

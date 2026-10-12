@@ -72,6 +72,10 @@ export type ChatCopy = {
     markDone: string;
     reopen: string;
     delete: string;
+    edit: string;
+    save: string;
+    cancel: string;
+    dragHandle: string;
     loading: string;
     failed: string;
     reminderTitle: string;
@@ -559,6 +563,10 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
           markDone: "Erledigt",
           reopen: "Wieder öffnen",
           delete: "Löschen",
+          edit: "Bearbeiten",
+          save: "Speichern",
+          cancel: "Abbrechen",
+          dragHandle: "Ziehen zum Sortieren",
           loading: "To-dos werden geladen…",
           failed: "To-dos konnten nicht geladen werden.",
           reminderTitle: "Denk daran",
@@ -654,6 +662,10 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
           markDone: "Done",
           reopen: "Reopen",
           delete: "Delete",
+          edit: "Edit",
+          save: "Save",
+          cancel: "Cancel",
+          dragHandle: "Drag to reorder",
           loading: "Loading to-dos…",
           failed: "Could not load to-dos.",
           reminderTitle: "Remember this",

@@ -258,6 +258,39 @@ export async function PATCH(req: NextRequest) {
   return NextResponse.json(item);
 }
 
+export async function PUT(req: NextRequest) {
+  const supabase = getSupabase();
+  if (!supabase) {
+    return NextResponse.json(
+      { error: "Cloud sync is not configured." },
+      { status: 503 }
+    );
+  }
+
+  let body: { ids?: unknown };
+  try {
+    body = (await req.json()) as { ids?: unknown };
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+  }
+
+  const ids = Array.isArray(body.ids)
+    ? body.ids.filter((id): id is string => typeof id === "string" && id.length > 0)
+    : [];
+  if (!ids.length) {
+    return NextResponse.json({ error: "ids required." }, { status: 400 });
+  }
+
+  const { error } = await supabase.rpc("sunshine_todos_reorder", {
+    p_key: sunshineVaultKey(),
+    p_ids: ids,
+  });
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 502 });
+  }
+  return NextResponse.json({ ok: true });
+}
+
 export async function DELETE(req: NextRequest) {
   const supabase = getSupabase();
   if (!supabase) {
