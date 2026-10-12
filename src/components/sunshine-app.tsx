@@ -24,6 +24,7 @@ import { SlideDeckView } from "@/components/slide-deck";
 import { SunLogo } from "@/components/sun-logo";
 import { SurpriseOverlay } from "@/components/surprise-overlay";
 import { WaterReminder } from "@/components/water-reminder";
+import { WhatsNewOverlay } from "@/components/whats-new-overlay";
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +34,17 @@ import {
   MessageHeader,
 } from "@/components/ui/message";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  browserReplyLanguage,
+  chatActivityLabel,
+  chatCopy,
+  detectReplyLanguage,
+  isOpeningGreeting,
+  openingGreeting,
+  resolveReplyLanguage,
+  speechLocale,
+  type ReplyLanguage,
+} from "@/lib/language";
 import { needsWebLookup } from "@/lib/model-pick";
 import { parseAssistantReply } from "@/lib/parse-reply";
 import {
@@ -88,16 +100,25 @@ function createThread(seed?: ChatMessage[]): ChatThread {
   };
 }
 
-const DEMO_SEED: ChatMessage[] = [
-  {
-    id: "demo-1",
-    role: "assistant",
-    content:
-      "Hi Noorie — I’m Maria Sunshine. What would you like to learn or work on today?",
-    createdAt: new Date().toISOString(),
-    status: "Ready",
-  },
-];
+function userSamples(messages: ChatMessage[]): string[] {
+  return messages
+    .filter((message) => message.role === "user")
+    .map((message) => message.content);
+}
+
+function withOpeningGreeting(
+  messages: ChatMessage[],
+  lang: ReplyLanguage
+): ChatMessage[] {
+  if (messages.length !== 1) return messages;
+  const only = messages[0];
+  if (!only || only.role !== "assistant" || !isOpeningGreeting(only.content)) {
+    return messages;
+  }
+  const next = openingGreeting(lang);
+  if (only.content === next) return messages;
+  return [{ ...only, content: next }];
+}
 
 export function SunshineApp() {
   const [ready, setReady] = useState(false);
@@ -113,6 +134,7 @@ export function SunshineApp() {
   const [listening, setListening] = useState(false);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const [waterShowing, setWaterShowing] = useState(false);
+  const [whatsNewShowing, setWhatsNewShowing] = useState(false);
   const [previewSurprise, setPreviewSurprise] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -124,7 +146,15 @@ export function SunshineApp() {
       setChats(stored);
       setActiveId(loadActiveChatId() ?? stored[0]?.id ?? null);
     } else {
-      const first = createThread(DEMO_SEED);
+      const first = createThread([
+        {
+          id: "demo-1",
+          role: "assistant",
+          content: openingGreeting(browserReplyLanguage()),
+          createdAt: new Date().toISOString(),
+          status: "Ready",
+        },
+      ]);
       setChats([first]);
       setActiveId(first.id);
       saveChats([first]);
@@ -172,6 +202,11 @@ export function SunshineApp() {
     () => chats.find((c) => c.id === activeId) ?? null,
     [chats, activeId]
   );
+  const activeLanguage = useMemo(
+    () => resolveReplyLanguage(userSamples(active?.messages ?? [])),
+    [active]
+  );
+  const copy = chatCopy(activeLanguage);
 
   const hasUserMessage = Boolean(
     active?.messages.some((m) => m.role === "user")
@@ -230,7 +265,7 @@ export function SunshineApp() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      setError("Voice input is not supported in this browser.");
+      setError(chatCopy(resolveReplyLanguage(userSamples(active?.messages ?? []))).voiceUnsupported);
       return;
     }
     if (listening && recognitionRef.current) {
@@ -238,8 +273,12 @@ export function SunshineApp() {
       setListening(false);
       return;
     }
+    const listenLanguage = resolveReplyLanguage([
+      ...userSamples(active?.messages ?? []),
+      draft,
+    ]);
     const recognition = new SpeechRecognition();
-    recognition.lang = "en-US";
+    recognition.lang = speechLocale(listenLanguage);
     recognition.interimResults = false;
     recognition.onresult = (event: {
       results: { [index: number]: { 0: { transcript: string } } };
@@ -255,8 +294,11 @@ export function SunshineApp() {
   };
 
   const speakMessage = (messageId: string, text: string) => {
+    const spokenLanguage =
+      detectReplyLanguage([text]) ??
+      resolveReplyLanguage(userSamples(active?.messages ?? []));
     if (typeof window === "undefined" || !window.speechSynthesis) {
-      setError("Speaking aloud is not supported in this browser.");
+      setError(chatCopy(spokenLanguage).speakUnsupported);
       return;
     }
     const clean = text.trim();
@@ -266,8 +308,13 @@ export function SunshineApp() {
       setSpeakingId(null);
       return;
     }
+    const locale = speechLocale(spokenLanguage);
     const utter = new SpeechSynthesisUtterance(clean);
-    utter.lang = "en-US";
+    utter.lang = locale;
+    const voice = window.speechSynthesis
+      .getVoices()
+      .find((item) => item.lang.toLowerCase().startsWith(locale.slice(0, 2)));
+    if (voice) utter.voice = voice;
     utter.rate = 0.95;
     utter.onend = () => setSpeakingId(null);
     utter.onerror = () => setSpeakingId(null);
@@ -284,6 +331,8 @@ export function SunshineApp() {
     const settings = loadSettings();
     const { history, assistantId, filesForRequest, userContentForMemory } =
       opts;
+    const replyLanguage = resolveReplyLanguage(userSamples(history));
+    const turnCopy = chatCopy(replyLanguage);
 
     setSending(true);
     setError(null);
@@ -301,6 +350,7 @@ export function SunshineApp() {
           notesDocument: notesToDocument(notes),
           apiKey: settings.mistralApiKey || undefined,
           attachments: filesForRequest,
+          lang: replyLanguage,
         }),
       });
 
@@ -326,7 +376,7 @@ export function SunshineApp() {
           updatedAt: new Date().toISOString(),
           messages: thread.messages.map((m) =>
             m.id === assistantId
-              ? { ...m, content: live, status: "Writing…" }
+              ? { ...m, content: live, status: chatActivityLabel(replyLanguage, "writing") }
               : m
           ),
         }));
@@ -352,10 +402,10 @@ export function SunshineApp() {
             m.id === assistantId
               ? {
                   ...m,
-                  content: replyText || "Looking that up…",
+                  content: replyText || turnCopy.looking,
                   deck: parsed.deck,
                   diagram: parsed.diagram,
-                  status: "Looking it up…",
+                  status: chatActivityLabel(replyLanguage, "looking"),
                 }
               : m
           ),
@@ -366,6 +416,7 @@ export function SunshineApp() {
           body: JSON.stringify({
             query: lookupQuery,
             apiKey: settings.mistralApiKey || undefined,
+            lang: replyLanguage,
           }),
         });
         const searchData = (await searchRes.json().catch(() => null)) as {
@@ -397,7 +448,7 @@ export function SunshineApp() {
                   deck: parsed.deck,
                   diagram: parsed.diagram,
                   sources,
-                  status: "Drawing…",
+                  status: chatActivityLabel(replyLanguage, "drawing"),
                 }
               : m
           ),
@@ -485,8 +536,8 @@ export function SunshineApp() {
           m.id === assistantId
             ? {
                 ...m,
-                content: m.content || `I hit a snag: ${message}`,
-                status: "Error",
+                content: m.content || `${turnCopy.snag}: ${message}`,
+                status: chatActivityLabel(replyLanguage, "error"),
               }
             : m
         ),
@@ -522,21 +573,26 @@ export function SunshineApp() {
         ? (text || attachmentMeta[0]?.name || "New chat").slice(0, 48)
         : active.title;
 
-    const history = [...active.messages, userMessage];
+    const replyLanguage = resolveReplyLanguage([
+      ...userSamples(active.messages),
+      text,
+    ]);
+    const baseMessages = withOpeningGreeting(active.messages, replyLanguage);
+    const history = [...baseMessages, userMessage];
 
     updateActive((thread) => ({
       ...thread,
       title,
       updatedAt: now,
       messages: [
-        ...thread.messages,
+        ...baseMessages,
         userMessage,
         {
           id: assistantId,
           role: "assistant",
           content: "",
           createdAt: now,
-          status: "Writing…",
+          status: chatActivityLabel(replyLanguage, "writing"),
         },
       ],
     }));
@@ -578,6 +634,7 @@ export function SunshineApp() {
     const assistantId = newId();
     const now = new Date().toISOString();
     const history = messages.slice(0, lastAssistantIndex);
+    const replyLanguage = resolveReplyLanguage(userSamples(history));
 
     updateActive((thread) => ({
       ...thread,
@@ -589,7 +646,7 @@ export function SunshineApp() {
           role: "assistant",
           content: "",
           createdAt: now,
-          status: "Writing…",
+          status: chatActivityLabel(replyLanguage, "writing"),
         },
       ],
     }));
@@ -782,7 +839,7 @@ export function SunshineApp() {
               <p className="font-[family-name:var(--font-fraunces)] text-lg font-medium text-rapunzel-plum">
                 {active?.title ?? "Sunshine"}
               </p>
-              <p className="text-xs text-rapunzel-ink/60">Chat with Maria Sunshine</p>
+              <p className="text-xs text-rapunzel-ink/60">{copy.header}</p>
             </div>
           </div>
           <Button
@@ -811,16 +868,10 @@ export function SunshineApp() {
                     Sunshine
                   </h1>
                   <p className="mt-3 text-base leading-relaxed text-rapunzel-ink">
-                    Hi Noorie — I&apos;m Maria Sunshine. What would you like to
-                    learn or work on today?
+                    {copy.greeting}
                   </p>
                   <div className="mt-6 flex flex-wrap justify-center gap-2">
-                    {[
-                      "Explain this in a simple way",
-                      "Make me slides",
-                      "Draw me a picture",
-                      "Quiz me",
-                    ].map((idea) => (
+                    {copy.ideas.map((idea) => (
                       <button
                         key={idea}
                         type="button"
@@ -847,6 +898,9 @@ export function SunshineApp() {
                     const isLastUser = isUser && index === lastUserIndex;
                     const isLastAssistant =
                       !isUser && index === lastAssistantIndex;
+                    const spokenCopy = chatCopy(
+                      detectReplyLanguage([message.content]) ?? activeLanguage
+                    );
                     return (
                       <Message key={message.id} align={isUser ? "start" : "end"}>
                         <MessageContent>
@@ -947,7 +1001,9 @@ export function SunshineApp() {
                                 className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] text-rapunzel-plum hover:bg-white/70"
                               >
                                 <Volume2 className="size-3" />
-                                {speakingId === message.id ? "Stop" : "Speak"}
+                                {speakingId === message.id
+                                  ? spokenCopy.stop
+                                  : spokenCopy.speak}
                               </button>
                             </MessageFooter>
                           ) : null}
@@ -1022,7 +1078,7 @@ export function SunshineApp() {
                     listening ? "text-destructive" : "text-rapunzel-plum"
                   )}
                   onClick={toggleMic}
-                  title="Voice to text"
+                  title={copy.voiceTitle}
                 >
                   {listening ? (
                     <MicOff className="size-5" />
@@ -1033,7 +1089,7 @@ export function SunshineApp() {
                 <Textarea
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
-                  placeholder="Message Maria Sunshine…"
+                  placeholder={copy.placeholder}
                   rows={1}
                   className="min-h-11 flex-1 resize-none border-0 bg-transparent shadow-none focus-visible:ring-0"
                   onKeyDown={(e) => {
@@ -1055,8 +1111,7 @@ export function SunshineApp() {
                 </Button>
               </div>
               <p className="mx-auto mt-2 max-w-2xl text-center text-[11px] text-rapunzel-plum/80">
-                Tell Maria Sunshine if you want anything in Sunshine changed. She saves
-                it in the upgrade backlog.
+                {copy.backlogHint}
               </p>
             </div>
           </section>
@@ -1072,9 +1127,13 @@ export function SunshineApp() {
         </div>
       </main>
 
-      <WaterReminder onShowingChange={setWaterShowing} />
+      <WhatsNewOverlay onShowingChange={setWhatsNewShowing} />
+      <WaterReminder
+        paused={whatsNewShowing}
+        onShowingChange={setWaterShowing}
+      />
       <SurpriseOverlay
-        waterShowing={waterShowing}
+        waterShowing={waterShowing || whatsNewShowing}
         previewLine={previewSurprise}
         onPreviewConsumed={() => setPreviewSurprise(null)}
       />

@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { detectReplyLanguage, type ReplyLanguage } from "@/lib/language";
 import {
   extractConversationSources,
   extractConversationText,
@@ -9,7 +10,26 @@ export const maxDuration = 60;
 type SearchBody = {
   query?: string;
   apiKey?: string;
+  lang?: ReplyLanguage;
 };
+
+function searchLanguage(body: SearchBody, query: string): ReplyLanguage {
+  if (body.lang === "de" || body.lang === "en") return body.lang;
+  return detectReplyLanguage([query]) ?? "en";
+}
+
+function searchInstructions(lang: ReplyLanguage): string {
+  switch (lang) {
+    case "de":
+      return "You are Maria Sunshine helping Noorie. Search the web when facts must be current. Answer in warm, clear German only. Keep it short and kind.";
+    case "en":
+      return "You are Maria Sunshine helping Noorie. Search the web when facts must be current. Answer in warm, clear English only. Keep it short and kind.";
+    default: {
+      const exhaustive: never = lang;
+      return exhaustive;
+    }
+  }
+}
 
 export async function POST(req: NextRequest) {
   let body: SearchBody;
@@ -48,8 +68,7 @@ export async function POST(req: NextRequest) {
     body: JSON.stringify({
       model: "mistral-medium-latest",
       store: false,
-      instructions:
-        "You are Maria Sunshine helping Noorie. Search the web when facts must be current. Answer in warm, clear English. Keep it short and kind.",
+      instructions: searchInstructions(searchLanguage(body, query)),
       tools: [{ type: "web_search" }],
       inputs: query.slice(0, 2000),
     }),

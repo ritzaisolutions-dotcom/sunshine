@@ -5,7 +5,7 @@ import {
   EMPTY_NOTES,
   NourieNotes,
 } from "@/lib/types";
-import { DEFAULT_SYSTEM_PROMPT } from "@/lib/prompts";
+import { resolveSystemPrompt } from "@/lib/prompts";
 
 const KEYS = {
   chats: "sunshine.chats",
@@ -14,9 +14,13 @@ const KEYS = {
   settings: "sunshine.settings",
   waterAt: "sunshine.waterLastAt",
   surpriseVisit: "sunshine.surpriseVisitId",
+  whatsNewSeen: "sunshine.whatsNewSeen",
   goodnotes: "sunshine.goodnotesConnected",
   backlog: "sunshine.backlog",
 } as const;
+
+/** Bump this when shipping a new one-time “What’s new” card. */
+export const WHATS_NEW_VERSION = "2026-10-language";
 
 function canUseStorage(): boolean {
   return typeof window !== "undefined" && typeof localStorage !== "undefined";
@@ -82,7 +86,7 @@ export function saveNotes(notes: NourieNotes) {
 export function loadSettings(): AdminSettings {
   const stored = readJson<Partial<AdminSettings>>(KEYS.settings, {});
   return {
-    systemPrompt: stored.systemPrompt ?? DEFAULT_SYSTEM_PROMPT,
+    systemPrompt: resolveSystemPrompt(stored.systemPrompt),
     mistralApiKey: stored.mistralApiKey ?? "",
     surpriseLines: stored.surpriseLines ?? [
       "You are doing beautifully, princess.",
@@ -117,6 +121,16 @@ export function loadSurpriseVisitId(): string | null {
 export function saveSurpriseVisitId(id: string) {
   if (!canUseStorage()) return;
   localStorage.setItem(KEYS.surpriseVisit, id);
+}
+
+export function loadWhatsNewSeen(): string | null {
+  if (!canUseStorage()) return null;
+  return localStorage.getItem(KEYS.whatsNewSeen);
+}
+
+export function saveWhatsNewSeen(version: string) {
+  if (!canUseStorage()) return;
+  localStorage.setItem(KEYS.whatsNewSeen, version);
 }
 
 export function loadGoodnotesConnected(): boolean {

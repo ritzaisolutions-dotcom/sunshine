@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { pickChatModel } from "@/lib/model-pick";
+import { detectReplyLanguage, languageInstruction } from "@/lib/language";
 import {
   BACKLOG_RULE,
   CHEER_RULE,
@@ -25,6 +26,7 @@ type ChatBody = {
   notesDocument?: string;
   apiKey?: string;
   attachments?: IncomingAttachment[];
+  lang?: "de" | "en";
 };
 
 function buildUserContent(
@@ -96,6 +98,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const userTexts = body.messages
+    .filter((message) => message.role === "user")
+    .map((message) => message.content);
+  const hinted = body.lang === "de" || body.lang === "en" ? body.lang : null;
+  const replyLanguage = detectReplyLanguage(userTexts) ?? hinted ?? "en";
+
   const systemParts = [
     body.systemPrompt?.trim() || DEFAULT_SYSTEM_PROMPT,
     `\n\n${CHEER_RULE}`,
@@ -105,6 +113,7 @@ export async function POST(req: NextRequest) {
     body.notesDocument
       ? `\n\nAbout Noorie (living memory — use this, do not invent):\n${body.notesDocument}`
       : "",
+    `\n\n${languageInstruction(replyLanguage)}`,
   ]
     .join("")
     .trim();
