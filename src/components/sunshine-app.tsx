@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   useCallback,
   useEffect,
@@ -11,7 +10,6 @@ import {
 } from "react";
 import {
   Archive,
-  FileText,
   Menu,
   Mic,
   MicOff,
@@ -24,10 +22,6 @@ import {
   X,
 } from "lucide-react";
 import { BowField } from "@/components/bow-pattern";
-import {
-  CloudSyncPanel,
-  type CloudSyncStatus,
-} from "@/components/cloud-sync-panel";
 import { DiagramView } from "@/components/diagram-view";
 import { LoadingDots } from "@/components/loading-dots";
 import { SlideDeckView } from "@/components/slide-deck";
@@ -159,7 +153,6 @@ export function SunshineApp() {
   const [waterShowing, setWaterShowing] = useState(false);
   const [whatsNewShowing, setWhatsNewShowing] = useState(false);
   const [previewSurprise, setPreviewSurprise] = useState<string | null>(null);
-  const [cloudStatus, setCloudStatus] = useState<CloudSyncStatus>("loading");
   const [cloudHydrated, setCloudHydrated] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -214,14 +207,12 @@ export function SunshineApp() {
   useEffect(() => {
     if (!ready) return;
     let cancelled = false;
-    setCloudStatus("loading");
     void (async () => {
       try {
         const result = await pullCloudVault();
         if (cancelled) return;
         if (!result.configured) {
           cloudEnabledRef.current = false;
-          setCloudStatus("off");
           setCloudHydrated(true);
           return;
         }
@@ -241,12 +232,10 @@ export function SunshineApp() {
             setActiveId(nextActive);
           }
         }
-        setCloudStatus("ok");
         setCloudHydrated(true);
       } catch {
         if (cancelled) return;
         cloudEnabledRef.current = true;
-        setCloudStatus("error");
         setCloudHydrated(true);
       }
     })();
@@ -277,10 +266,9 @@ export function SunshineApp() {
       return;
     }
     const timer = window.setTimeout(() => {
-      setCloudStatus("saving");
-      void pushCloudVault(chats, notes)
-        .then(() => setCloudStatus("ok"))
-        .catch(() => setCloudStatus("error"));
+      void pushCloudVault(chats, notes).catch(() => {
+        /* keep chatting; next edit retries */
+      });
     }, 1500);
     return () => window.clearTimeout(timer);
   }, [chats, notes, ready, cloudHydrated]);
@@ -917,15 +905,7 @@ export function SunshineApp() {
         >
           {copy.aboutNoorie}
         </Button>
-        <Link
-          href="/study-sheet"
-          className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-rapunzel-ink hover:bg-white/50"
-        >
-          <FileText className="size-4 text-rapunzel-gold" />
-          {copy.studySheet}
-        </Link>
       </div>
-      <CloudSyncPanel lang={activeLanguage} status={cloudStatus} />
     </aside>
   );
 
@@ -1272,9 +1252,6 @@ export function SunshineApp() {
                   <Send className="size-4" />
                 </Button>
               </div>
-              <p className="mx-auto mt-2 max-w-2xl text-center text-[11px] text-rapunzel-plum/80">
-                {copy.backlogHint}
-              </p>
             </div>
           </section>
 

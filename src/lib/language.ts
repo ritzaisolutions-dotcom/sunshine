@@ -20,7 +20,6 @@ export type ChatCopy = {
   voiceTitle: string;
   speak: string;
   stop: string;
-  backlogHint: string;
   looking: string;
   snag: string;
   voiceUnsupported: string;
@@ -32,7 +31,6 @@ export type ChatCopy = {
   putAwayAria: (title: string) => string;
   aboutNoorie: string;
   hideNotes: string;
-  studySheet: string;
   edit: string;
   tryAgain: string;
   attach: string;
@@ -52,15 +50,6 @@ export type ChatCopy = {
   updateApp: string;
   installApp: string;
   dismissInstall: string;
-  sync: {
-    title: string;
-    blurb: string;
-    loading: string;
-    saving: string;
-    autoOk: string;
-    failed: string;
-    missingEnv: string;
-  };
 };
 
 const GERMAN_WORDS = new Set([
@@ -465,8 +454,6 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         voiceTitle: "Auf Deutsch oder Englisch sprechen",
         speak: "Vorlesen",
         stop: "Stopp",
-        backlogHint:
-          "Sag Maria Sunshine, wenn du etwas an Sunshine ändern möchtest. Sie speichert es in der Wunschliste.",
         looking: "Ich schau kurz nach…",
         snag: "Da ist etwas schiefgelaufen",
         voiceUnsupported:
@@ -480,7 +467,6 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         putAwayAria: (title) => `${title} weglegen`,
         aboutNoorie: "Über Noorie",
         hideNotes: "Notizen aus",
-        studySheet: "Lernblatt",
         edit: "Bearbeiten",
         tryAgain: "Nochmal",
         attach: "Anhang",
@@ -524,17 +510,6 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         updateApp: "Sunshine aktualisieren",
         installApp: "Sunshine installieren",
         dismissInstall: "Nicht jetzt",
-        sync: {
-          title: "Cloud",
-          blurb:
-            "Chats und Über Noorie speichern sich automatisch — auf Telefon und Laptop gleich.",
-          loading: "Cloud wird geladen…",
-          saving: "Wird gespeichert…",
-          autoOk: "Automatisch synchron",
-          failed: "Sync fehlgeschlagen.",
-          missingEnv:
-            "Cloud-Sync braucht NEXT_PUBLIC_SUPABASE_URL und NEXT_PUBLIC_SUPABASE_ANON_KEY auf dem Server.",
-        },
       };
     case "en":
       return {
@@ -549,8 +524,6 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         voiceTitle: "Speak in English or German",
         speak: "Speak",
         stop: "Stop",
-        backlogHint:
-          "Tell Maria Sunshine if you want anything in Sunshine changed. She saves it in the upgrade backlog.",
         looking: "Looking that up…",
         snag: "I hit a snag",
         voiceUnsupported: "Voice input is not supported in this browser.",
@@ -562,7 +535,6 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         putAwayAria: (title) => `Put away ${title}`,
         aboutNoorie: "About Noorie",
         hideNotes: "Hide notes",
-        studySheet: "Study sheet",
         edit: "Edit",
         tryAgain: "Try again",
         attach: "Attach",
@@ -606,17 +578,6 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         updateApp: "Update Sunshine",
         installApp: "Install Sunshine",
         dismissInstall: "Not now",
-        sync: {
-          title: "Cloud",
-          blurb:
-            "Chats and About Noorie save automatically — same on phone and laptop.",
-          loading: "Loading cloud…",
-          saving: "Saving…",
-          autoOk: "Synced automatically",
-          failed: "Sync failed.",
-          missingEnv:
-            "Cloud sync needs NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY on the server.",
-        },
       };
     default: {
       const exhaustive: never = lang;
