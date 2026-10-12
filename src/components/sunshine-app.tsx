@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ClipboardEvent,
+} from "react";
 import {
   Archive,
   FileText,
@@ -259,24 +266,44 @@ export function SunshineApp() {
     );
   };
 
-  const onPickFiles = async (files: FileList | null) => {
-    if (!files?.length) return;
+  const onPickFiles = async (files: FileList | File[] | null) => {
+    const list = files ? Array.from(files) : [];
+    if (!list.length) return;
     const next: PendingFile[] = [];
-    for (const file of Array.from(files)) {
+    for (const [index, file] of list.entries()) {
       const buffer = await file.arrayBuffer();
       const bytes = new Uint8Array(buffer);
       let binary = "";
       bytes.forEach((b) => {
         binary += String.fromCharCode(b);
       });
+      const fallbackExt = file.type.startsWith("image/")
+        ? file.type.split("/")[1] || "png"
+        : "bin";
       next.push({
-        name: file.name,
+        name: file.name?.trim() || `paste-${index + 1}.${fallbackExt}`,
         mimeType: file.type || "application/octet-stream",
         size: file.size,
         dataBase64: btoa(binary),
       });
     }
     setPendingFiles((prev) => [...prev, ...next]);
+  };
+
+  const onPasteIntoChat = (event: ClipboardEvent<HTMLElement>) => {
+    const items = event.clipboardData?.items;
+    if (!items?.length) return;
+
+    const files: File[] = [];
+    for (const item of Array.from(items)) {
+      if (item.kind !== "file") continue;
+      const file = item.getAsFile();
+      if (file) files.push(file);
+    }
+    if (!files.length) return;
+
+    event.preventDefault();
+    void onPickFiles(files);
   };
 
   const toggleMic = () => {
@@ -1107,7 +1134,10 @@ export function SunshineApp() {
             )}
 
             <div className="px-4 pb-5 pt-2 md:px-6">
-              <div className="mx-auto flex w-full max-w-2xl items-end gap-2 rounded-[1.75rem] border border-input bg-card p-2 shadow-[0_12px_40px_-24px_color-mix(in_srgb,var(--primary)_45%,transparent)]">
+              <div
+                className="mx-auto flex w-full max-w-2xl items-end gap-2 rounded-[1.75rem] border border-input bg-card p-2 shadow-[0_12px_40px_-24px_color-mix(in_srgb,var(--primary)_45%,transparent)]"
+                onPaste={onPasteIntoChat}
+              >
                 <input
                   ref={fileRef}
                   type="file"
@@ -1167,6 +1197,7 @@ export function SunshineApp() {
                   placeholder={copy.placeholder}
                   rows={1}
                   className="min-h-11 flex-1 resize-none border-0 bg-transparent shadow-none focus-visible:ring-0"
+                  onPaste={onPasteIntoChat}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
