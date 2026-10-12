@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Nunito } from "next/font/google";
 import "./globals.css";
 
@@ -15,6 +15,24 @@ const fraunces = Fraunces({
 export const metadata: Metadata = {
   title: "Sunshine",
   description: "Maria Sunshine helps Noorie learn — a girlie chat companion.",
+  applicationName: "Sunshine",
+  appleWebApp: {
+    capable: true,
+    title: "Sunshine",
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#F2C14E",
+  colorScheme: "light",
 };
 
 export default function RootLayout({

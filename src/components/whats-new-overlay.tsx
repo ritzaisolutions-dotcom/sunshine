@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   Cloud,
+  Download,
   Droplets,
   ImageIcon,
   Languages,
@@ -22,6 +23,12 @@ import {
 } from "@/lib/storage";
 
 const FEATURES = [
+  {
+    icon: Download,
+    title: "Install Sunshine",
+    blurb:
+      "Add Sunshine to your home screen. New builds show an Update chip — no stale app.",
+  },
   {
     icon: Languages,
     title: "German or English",

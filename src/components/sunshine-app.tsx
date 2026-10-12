@@ -30,6 +30,7 @@ import { LoadingDots } from "@/components/loading-dots";
 import { SlideDeckView } from "@/components/slide-deck";
 import { SunLogo } from "@/components/sun-logo";
 import { SurpriseOverlay } from "@/components/surprise-overlay";
+import { AppInstall } from "@/components/app-install";
 import { WaterReminder } from "@/components/water-reminder";
 import { WhatsNewOverlay } from "@/components/whats-new-overlay";
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
@@ -1238,6 +1239,7 @@ export function SunshineApp() {
       </main>
 
       <WhatsNewOverlay onShowingChange={setWhatsNewShowing} />
+      <AppInstall lang={activeLanguage} />
       <WaterReminder
         lang={activeLanguage}
         paused={whatsNewShowing}

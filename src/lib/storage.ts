@@ -19,10 +19,11 @@ const KEYS = {
   goodnotes: "sunshine.goodnotesConnected",
   backlog: "sunshine.backlog",
   voiceLang: "sunshine.voiceLang",
+  installDismissed: "sunshine.installDismissed",
 } as const;
 
 /** Bump this when shipping a new one-time “What’s new” card. */
-export const WHATS_NEW_VERSION = "2026-10-ux-chrome";
+export const WHATS_NEW_VERSION = "2026-10-installable";
 
 function canUseStorage(): boolean {
   return typeof window !== "undefined" && typeof localStorage !== "undefined";
@@ -145,6 +146,16 @@ export function loadVoiceLang(): ReplyLanguage | null {
 export function saveVoiceLang(lang: ReplyLanguage) {
   if (!canUseStorage()) return;
   localStorage.setItem(KEYS.voiceLang, lang);
+}
+
+export function loadInstallDismissed(): boolean {
+  if (!canUseStorage()) return false;
+  return localStorage.getItem(KEYS.installDismissed) === "1";
+}
+
+export function saveInstallDismissed() {
+  if (!canUseStorage()) return;
+  localStorage.setItem(KEYS.installDismissed, "1");
 }
 
 export function loadGoodnotesConnected(): boolean {

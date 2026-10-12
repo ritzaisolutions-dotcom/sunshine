@@ -49,6 +49,9 @@ export type ChatCopy = {
   waterPrompt: string;
   waterDrunk: string;
   waterClose: string;
+  updateApp: string;
+  installApp: string;
+  dismissInstall: string;
   sync: {
     title: string;
     blurb: string;
@@ -526,6 +529,9 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         waterPrompt: "Zeit für einen Schluck Wasser",
         waterDrunk: "Getrunken",
         waterClose: "Schließen",
+        updateApp: "Sunshine aktualisieren",
+        installApp: "Sunshine installieren",
+        dismissInstall: "Nicht jetzt",
         sync: {
           title: "Folge mir",
           blurb:
@@ -615,6 +621,9 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         waterPrompt: "Time for a sip of water",
         waterDrunk: "Drunk",
         waterClose: "Close",
+        updateApp: "Update Sunshine",
+        installApp: "Install Sunshine",
+        dismissInstall: "Not now",
         sync: {
           title: "Follow me",
           blurb:
