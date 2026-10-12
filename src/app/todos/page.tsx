@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Check, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, Plus, Trash2 } from "lucide-react";
 import { BowField } from "@/components/bow-pattern";
 import { SunLogo } from "@/components/sun-logo";
 import { Button } from "@/components/ui/button";
@@ -147,20 +147,25 @@ export default function TodosPage() {
       <BowField />
       <div className="relative z-10 mx-auto max-w-2xl px-4 py-6">
         <header className="mb-6 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <SunLogo className="size-10" title="Sunshine" />
-            <div>
-              <h1 className="font-[family-name:var(--font-fraunces)] text-2xl tracking-tight">
-                {copy.title}
-              </h1>
-              <Link
-                href="/"
-                className="text-sm text-rapunzel-plum/80 hover:text-rapunzel-plum"
-              >
-                {copy.back}
-              </Link>
-            </div>
+          <div className="flex min-w-0 items-center gap-3">
+            <Link
+              href="/"
+              aria-label={copy.back}
+              className="grid size-10 shrink-0 place-items-center rounded-full border border-white/80 bg-card/80 text-rapunzel-ink hover:bg-white/70"
+            >
+              <ArrowLeft className="size-4" />
+            </Link>
+            <SunLogo className="size-10 shrink-0" title="Sunshine" />
+            <h1 className="truncate font-[family-name:var(--font-fraunces)] text-2xl tracking-tight">
+              {copy.title}
+            </h1>
           </div>
+          <Link
+            href="/"
+            className="shrink-0 rounded-full bg-rapunzel-gold px-4 py-2 text-sm text-rapunzel-ink hover:bg-rapunzel-gold-deep"
+          >
+            {copy.back}
+          </Link>
         </header>
 
         <form
