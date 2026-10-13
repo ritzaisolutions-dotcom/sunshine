@@ -101,6 +101,10 @@ export type ChatCopy = {
     failed: string;
     unsupported: string;
     denied: string;
+    testPush: string;
+    testOk: string;
+    subscribed: string;
+    notSubscribed: string;
   };
 };
 
@@ -616,6 +620,11 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
           unsupported: "Dieser Browser unterstützt keine Push-Benachrichtigungen.",
           denied:
             "Benachrichtigungen sind blockiert. Bitte in den Browser-Einstellungen erlauben.",
+          testPush: "Test-Benachrichtigung",
+          testOk: "Test gesendet — schau außerhalb der App",
+          subscribed: "Dieses Gerät ist angemeldet.",
+          notSubscribed:
+            "Dieses Gerät ist noch nicht angemeldet. Tippe erneut auf Push einschalten.",
         },
       };
     case "en":
@@ -739,6 +748,11 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
           unsupported: "This browser does not support push notifications.",
           denied:
             "Notifications are blocked. Allow them in your browser settings.",
+          testPush: "Send test notification",
+          testOk: "Test sent — check outside the app",
+          subscribed: "This device is subscribed.",
+          notSubscribed:
+            "This device is not subscribed yet. Tap Turn push on again.",
         },
       };
     default: {

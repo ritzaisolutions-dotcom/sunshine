@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ListTodo, X } from "lucide-react";
 import { chatCopy, type ReplyLanguage } from "@/lib/language";
+import { loadNotificationPrefs } from "@/lib/storage";
 import {
   fetchTodos,
   patchTodo,
@@ -14,6 +15,24 @@ type TodoReminderProps = {
   paused?: boolean;
   onShowingChange?: (showing: boolean) => void;
 };
+
+const notifiedIds = new Set<string>();
+
+function showSystemTodoNotification(title: string, body: string) {
+  const prefs = loadNotificationPrefs();
+  if (!prefs.enabled || !prefs.dueTodos) return;
+  if (typeof Notification === "undefined") return;
+  if (Notification.permission !== "granted") return;
+  try {
+    new Notification(title, {
+      body,
+      tag: "sunshine-due-todos",
+      icon: "/icons/icon-192.png",
+    });
+  } catch {
+    /* ignore */
+  }
+}
 
 function pickDueTodo(items: SunshineTodo[]): SunshineTodo | null {
   const now = Date.now();
@@ -58,11 +77,15 @@ export function TodoReminder({
       if (next) {
         setTodo(next);
         onShowingChange?.(true);
+        if (!notifiedIds.has(next.id)) {
+          notifiedIds.add(next.id);
+          showSystemTodoNotification(copy.reminderTitle, next.title);
+        }
       }
     } catch {
       /* optional */
     }
-  }, [onShowingChange, paused]);
+  }, [copy.reminderTitle, onShowingChange, paused]);
 
   useEffect(() => {
     if (paused) {

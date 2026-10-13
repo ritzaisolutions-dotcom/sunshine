@@ -954,9 +954,11 @@ export function SunshineApp() {
   );
 
   return (
-    <div className="sunshine-shell relative flex min-h-screen text-rapunzel-ink">
+    <div className="sunshine-shell relative flex h-dvh max-h-dvh overflow-hidden text-rapunzel-ink">
       <BowField />
-      <div className="relative z-10 hidden md:block">{Sidebar}</div>
+      <div className="relative z-10 hidden h-full min-h-0 md:block">
+        {Sidebar}
+      </div>
 
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 flex md:hidden">
@@ -970,8 +972,8 @@ export function SunshineApp() {
         </div>
       )}
 
-      <main className="relative z-10 m-3 flex min-w-0 flex-1 flex-col overflow-hidden rounded-[1.75rem] border border-white/80 bg-card/72 shadow-[0_20px_60px_-36px_color-mix(in_srgb,var(--primary)_55%,transparent)]">
-        <header className="flex items-center justify-between border-b border-input px-4 py-3">
+      <main className="relative z-10 m-3 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[1.75rem] border border-white/80 bg-card/72 shadow-[0_20px_60px_-36px_color-mix(in_srgb,var(--primary)_55%,transparent)]">
+        <header className="z-30 flex shrink-0 items-center justify-between border-b border-input bg-card/95 px-4 py-3 backdrop-blur-md">
           <div className="flex items-center gap-3">
             <Button
               type="button"

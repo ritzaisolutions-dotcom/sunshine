@@ -157,10 +157,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html,
+  body {
+    @apply min-h-dvh font-sans;
+  }
   body {
     @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-sans;
   }
 }

@@ -80,13 +80,20 @@ export async function enablePush(
   const registration = await getRegistration();
   await navigator.serviceWorker.ready;
 
+  const applicationServerKey = urlBase64ToUint8Array(
+    vapid.publicKey
+  ) as BufferSource;
+
   let subscription = await registration.pushManager.getSubscription();
-  if (!subscription) {
-    subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapid.publicKey) as BufferSource,
-    });
+  if (subscription) {
+    // Re-subscribe if an old VAPID key was used on this device.
+    await subscription.unsubscribe().catch(() => undefined);
+    subscription = null;
   }
+  subscription = await registration.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey,
+  });
 
   const res = await fetch("/api/push/subscribe", {
     method: "POST",
@@ -101,7 +108,46 @@ export async function enablePush(
     throw new Error(data?.error || `Could not subscribe (${res.status})`);
   }
   const data = (await res.json()) as { prefs?: Partial<NotificationPrefs> };
+
+  try {
+    await registration.showNotification("Sunshine", {
+      body:
+        prefs.dueTodos !== false
+          ? "Push is on. Maria will remind you about due to-dos."
+          : "Push is on.",
+      tag: "sunshine-push-welcome",
+      icon: "/icons/icon-192.png",
+      data: { url: "/settings" },
+    });
+  } catch {
+    /* permission already granted; ignore show failures */
+  }
+
   return normalizeNotificationPrefs(data.prefs);
+}
+
+export async function sendTestPush(): Promise<{ sent: number; devices: number }> {
+  const res = await fetch("/api/push/test", { method: "POST" });
+  const data = (await res.json().catch(() => null)) as {
+    error?: string;
+    sent?: number;
+    devices?: number;
+  } | null;
+  if (!res.ok) {
+    throw new Error(data?.error || `Test push failed (${res.status})`);
+  }
+  return { sent: data?.sent ?? 0, devices: data?.devices ?? 0 };
+}
+
+export async function hasActivePushSubscription(): Promise<boolean> {
+  if (!pushSupported()) return false;
+  try {
+    const registration = await navigator.serviceWorker.getRegistration("/");
+    const subscription = await registration?.pushManager.getSubscription();
+    return Boolean(subscription);
+  } catch {
+    return false;
+  }
 }
 
 export async function disablePush(

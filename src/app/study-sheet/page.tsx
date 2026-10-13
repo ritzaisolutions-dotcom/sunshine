@@ -101,7 +101,7 @@ export default function StudySheetPage() {
   return (
     <div className="sunshine-shell relative min-h-screen text-[#3D2463] print:bg-white">
       <BowField className="print:hidden" />
-      <header className="sunshine-panel relative z-10 flex flex-wrap items-center justify-between gap-3 border-b border-[#D4B8E8] px-6 py-4 print:hidden">
+      <header className="sunshine-panel fixed inset-x-0 top-0 z-30 flex flex-wrap items-center justify-between gap-3 border-b border-[#D4B8E8] px-6 py-4 backdrop-blur-md print:hidden">
         <div className="flex items-center gap-3">
           <SunLogo className="size-10" />
           <h1 className="text-xl font-semibold text-[#7B4B9A]">Study sheet</h1>
@@ -142,12 +142,14 @@ export default function StudySheetPage() {
       </header>
 
       {connectMsg ? (
-        <p className="relative z-10 px-6 pt-4 text-sm text-[#7B4B9A] print:hidden">
+        <p className="relative z-10 px-6 pt-24 text-sm text-[#7B4B9A] print:hidden">
           {connectMsg}
         </p>
       ) : null}
 
-      <article className="relative z-10 mx-auto max-w-2xl space-y-6 px-6 py-8">
+      <article
+        className={`relative z-10 mx-auto max-w-2xl space-y-6 px-6 pb-8 ${connectMsg ? "pt-4" : "pt-24"}`}
+      >
         <div className="flex items-center gap-3">
           <SunLogo className="size-12" />
           <div>

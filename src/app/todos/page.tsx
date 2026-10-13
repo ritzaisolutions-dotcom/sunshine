@@ -261,8 +261,8 @@ export default function TodosPage() {
   return (
     <div className="sunshine-shell relative min-h-screen text-rapunzel-ink">
       <BowField />
-      <div className="relative z-10 mx-auto max-w-2xl px-4 py-6">
-        <header className="mb-6 flex items-center justify-between gap-3">
+      <header className="fixed inset-x-0 top-0 z-30 border-b border-white/70 bg-card/95 backdrop-blur-md">
+        <div className="relative z-10 mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex min-w-0 items-center gap-3">
             <Link
               href="/"
@@ -282,8 +282,9 @@ export default function TodosPage() {
           >
             {copy.back}
           </Link>
-        </header>
-
+        </div>
+      </header>
+      <div className="relative z-10 mx-auto max-w-2xl px-4 pb-6 pt-20">
         <form
           onSubmit={onCreate}
           className="mb-8 space-y-3 rounded-[1.5rem] border border-white/80 bg-card/80 p-4 shadow-sm"

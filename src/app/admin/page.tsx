@@ -77,7 +77,7 @@ export default function AdminPage() {
   return (
     <div className="sunshine-shell relative min-h-screen text-rapunzel-ink">
       <BowField />
-      <header className="sunshine-panel relative z-10 flex items-center justify-between border-b border-border px-6 py-4">
+      <header className="sunshine-panel fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b border-border px-6 py-4 backdrop-blur-md">
         <div className="flex items-center gap-3">
           <SunLogo className="size-10" />
           <div>
@@ -98,7 +98,7 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto grid max-w-3xl gap-8 px-6 py-8">
+      <main className="relative z-10 mx-auto grid max-w-3xl gap-8 px-6 pb-8 pt-24">
         <BacklogPanel items={backlog} onChange={setBacklog} />
 
         <section className="sunshine-panel rounded-3xl border border-border p-5 shadow-sm">

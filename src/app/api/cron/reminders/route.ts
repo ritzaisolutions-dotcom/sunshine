@@ -12,9 +12,12 @@ export const runtime = "nodejs";
 
 function authorizeCron(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET?.trim();
-  if (!secret) return false;
-  const auth = req.headers.get("authorization");
-  return auth === `Bearer ${secret}`;
+  if (secret) {
+    const auth = req.headers.get("authorization");
+    return auth === `Bearer ${secret}`;
+  }
+  // Fallback when CRON_SECRET is not set yet: trust Vercel's cron header only.
+  return req.headers.get("x-vercel-cron") === "1";
 }
 
 function pickDueForPush(items: SunshineTodo[]): SunshineTodo[] {
