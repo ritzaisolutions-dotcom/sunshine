@@ -32,6 +32,7 @@ export type ChatCopy = {
   aboutNoorie: string;
   hideNotes: string;
   todosNav: string;
+  settingsNav: string;
   edit: string;
   tryAgain: string;
   attach: string;
@@ -80,6 +81,26 @@ export type ChatCopy = {
     failed: string;
     reminderTitle: string;
     reminderClose: string;
+  };
+  settings: {
+    title: string;
+    back: string;
+    pushTitle: string;
+    pushBlurb: string;
+    iosHint: string;
+    turnOn: string;
+    turnOff: string;
+    channels: string;
+    dueTodos: string;
+    dueTodosHint: string;
+    water: string;
+    waterHint: string;
+    enabled: string;
+    disabled: string;
+    saved: string;
+    failed: string;
+    unsupported: string;
+    denied: string;
   };
 };
 
@@ -499,6 +520,7 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         aboutNoorie: "Über Noorie",
         hideNotes: "Notizen aus",
         todosNav: "To-dos",
+        settingsNav: "Einstellungen",
         edit: "Bearbeiten",
         tryAgain: "Nochmal",
         attach: "Anhang",
@@ -572,6 +594,29 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
           reminderTitle: "Denk daran",
           reminderClose: "Schließen",
         },
+        settings: {
+          title: "Einstellungen",
+          back: "Zurück zum Chat",
+          pushTitle: "Erinnerungen",
+          pushBlurb:
+            "Maria kann dich per Push an fällige To-dos erinnern — auch wenn Sunshine zu ist.",
+          iosHint:
+            "Am iPhone: Sunshine zum Home-Bildschirm legen, dann hier Push einschalten.",
+          turnOn: "Push einschalten",
+          turnOff: "Push ausschalten",
+          channels: "Was soll Maria schicken?",
+          dueTodos: "Fällige To-dos",
+          dueTodosHint: "Wenn ein Termin erreicht ist (alle 5 Minuten geprüft).",
+          water: "Wasser-Erinnerung",
+          waterHint: "Zusätzlicher System-Hinweis, während Sunshine offen ist.",
+          enabled: "Push ist an",
+          disabled: "Push ist aus",
+          saved: "Gespeichert",
+          failed: "Konnte nicht gespeichert werden.",
+          unsupported: "Dieser Browser unterstützt keine Push-Benachrichtigungen.",
+          denied:
+            "Benachrichtigungen sind blockiert. Bitte in den Browser-Einstellungen erlauben.",
+        },
       };
     case "en":
       return {
@@ -598,6 +643,7 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         aboutNoorie: "About Noorie",
         hideNotes: "Hide notes",
         todosNav: "To-dos",
+        settingsNav: "Settings",
         edit: "Edit",
         tryAgain: "Try again",
         attach: "Attach",
@@ -670,6 +716,29 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
           failed: "Could not load to-dos.",
           reminderTitle: "Remember this",
           reminderClose: "Close",
+        },
+        settings: {
+          title: "Settings",
+          back: "Back to chat",
+          pushTitle: "Reminders",
+          pushBlurb:
+            "Maria can push due to-dos to you — even when Sunshine is closed.",
+          iosHint:
+            "On iPhone: add Sunshine to the Home Screen, then turn push on here.",
+          turnOn: "Turn push on",
+          turnOff: "Turn push off",
+          channels: "What should Maria send?",
+          dueTodos: "Due to-dos",
+          dueTodosHint: "When a deadline is reached (checked every 5 minutes).",
+          water: "Water reminder",
+          waterHint: "Extra system nudge while Sunshine is open.",
+          enabled: "Push is on",
+          disabled: "Push is off",
+          saved: "Saved",
+          failed: "Could not save.",
+          unsupported: "This browser does not support push notifications.",
+          denied:
+            "Notifications are blocked. Allow them in your browser settings.",
         },
       };
     default: {

@@ -88,6 +88,12 @@ const FEATURES = [
     blurb:
       "Add tasks on the To-dos page or ask Maria. Deadlines get a gentle reminder; daily and weekly habits come back.",
   },
+  {
+    icon: Sparkles,
+    title: "Push reminders",
+    blurb:
+      "In Settings, turn on push so Maria can nudge you about due to-dos — even when Sunshine is closed.",
+  },
 ] as const;
 
 type WhatsNewOverlayProps = {

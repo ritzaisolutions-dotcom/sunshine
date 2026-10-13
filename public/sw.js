@@ -72,3 +72,64 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(cacheFirstStatic(request));
   }
 });
+
+self.addEventListener("push", (event) => {
+  let payload = {
+    title: "Sunshine",
+    body: "Maria has a reminder for you.",
+    url: "/todos",
+    tag: "sunshine-reminder",
+  };
+  try {
+    if (event.data) {
+      const data = event.data.json();
+      payload = {
+        title: typeof data.title === "string" ? data.title : payload.title,
+        body: typeof data.body === "string" ? data.body : payload.body,
+        url: typeof data.url === "string" ? data.url : payload.url,
+        tag: typeof data.tag === "string" ? data.tag : payload.tag,
+      };
+    }
+  } catch {
+    /* keep defaults */
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      tag: payload.tag,
+      renotify: true,
+      data: { url: payload.url },
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const targetUrl =
+    (event.notification.data && event.notification.data.url) || "/todos";
+  const absolute = new URL(targetUrl, self.location.origin).href;
+
+  event.waitUntil(
+    (async () => {
+      const clients = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+      for (const client of clients) {
+        if ("focus" in client) {
+          await client.focus();
+          if ("navigate" in client) {
+            await client.navigate(absolute);
+          }
+          return;
+        }
+      }
+      if (self.clients.openWindow) {
+        await self.clients.openWindow(absolute);
+      }
+    })()
+  );
+});

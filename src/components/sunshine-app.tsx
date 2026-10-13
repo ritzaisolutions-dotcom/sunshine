@@ -20,6 +20,7 @@ import {
   Plus,
   RefreshCw,
   Send,
+  Settings,
   Volume2,
   X,
 } from "lucide-react";
@@ -939,6 +940,14 @@ export function SunshineApp() {
         >
           <ListTodo className="size-4 text-rapunzel-gold" />
           {copy.todosNav}
+        </Link>
+        <Link
+          href="/settings"
+          className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-rapunzel-ink hover:bg-white/50"
+          onClick={() => setSidebarOpen(false)}
+        >
+          <Settings className="size-4 text-rapunzel-gold" />
+          {copy.settingsNav}
         </Link>
       </div>
     </aside>

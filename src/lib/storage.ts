@@ -6,6 +6,11 @@ import {
   NourieNotes,
 } from "@/lib/types";
 import type { ReplyLanguage } from "@/lib/language";
+import {
+  DEFAULT_NOTIFICATION_PREFS,
+  normalizeNotificationPrefs,
+  type NotificationPrefs,
+} from "@/lib/notifications";
 import { resolveSystemPrompt } from "@/lib/prompts";
 
 const KEYS = {
@@ -20,10 +25,11 @@ const KEYS = {
   backlog: "sunshine.backlog",
   voiceLang: "sunshine.voiceLang",
   installDismissed: "sunshine.installDismissed",
+  notificationPrefs: "sunshine.notificationPrefs",
 } as const;
 
 /** Bump this when shipping a new one-time “What’s new” card. */
-export const WHATS_NEW_VERSION = "2026-10-todos";
+export const WHATS_NEW_VERSION = "2026-10-push";
 
 function canUseStorage(): boolean {
   return typeof window !== "undefined" && typeof localStorage !== "undefined";
@@ -199,6 +205,19 @@ export function addBacklogWishes(
   }
   saveBacklog(next);
   return next;
+}
+
+export function loadNotificationPrefs(): NotificationPrefs {
+  return normalizeNotificationPrefs(
+    readJson<Partial<NotificationPrefs>>(
+      KEYS.notificationPrefs,
+      DEFAULT_NOTIFICATION_PREFS
+    )
+  );
+}
+
+export function saveNotificationPrefsLocal(prefs: NotificationPrefs) {
+  writeJson(KEYS.notificationPrefs, normalizeNotificationPrefs(prefs));
 }
 
 export const WATER_INTERVAL_MS = 30 * 60 * 1000;

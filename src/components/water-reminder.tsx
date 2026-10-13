@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { chatCopy, type ReplyLanguage } from "@/lib/language";
 import {
   WATER_INTERVAL_MS,
+  loadNotificationPrefs,
   loadWaterLastAt,
   saveWaterLastAt,
 } from "@/lib/storage";
@@ -45,7 +46,23 @@ export function WaterReminder({
     setVisible(true);
     onShowingChange?.(true);
     saveWaterLastAt(Date.now());
-  }, [onShowingChange]);
+    const prefs = loadNotificationPrefs();
+    if (
+      prefs.enabled &&
+      prefs.water &&
+      typeof Notification !== "undefined" &&
+      Notification.permission === "granted"
+    ) {
+      try {
+        new Notification(copy.waterPrompt, {
+          tag: "sunshine-water",
+          icon: "/icons/icon-192.png",
+        });
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [copy.waterPrompt, onShowingChange]);
 
   useEffect(
     () => () => {
