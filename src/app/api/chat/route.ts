@@ -8,7 +8,7 @@ import {
   IMAGE_RULE,
   SEARCH_RULE,
   TITLE_RULE,
-  TODO_RULE,
+  buildTodoRule,
 } from "@/lib/prompts";
 
 type IncomingAttachment = {
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
     `\n\n${IMAGE_RULE}`,
     `\n\n${SEARCH_RULE}`,
     `\n\n${BACKLOG_RULE}`,
-    `\n\n${TODO_RULE}`,
+    `\n\n${buildTodoRule(new Date().toISOString())}`,
     `\n\n${TITLE_RULE}`,
     body.notesDocument
       ? `\n\nAbout Noorie (living memory — use this, do not invent):\n${body.notesDocument}`

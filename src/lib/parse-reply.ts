@@ -160,14 +160,28 @@ function normalizeTodoAction(raw: unknown): TodoAction | null {
   if (op === "add") {
     const title = typeof action.title === "string" ? action.title.trim() : "";
     if (!title) return null;
+    const dueInMinutesRaw = action.dueInMinutes;
+    const dueInMinutes =
+      typeof dueInMinutesRaw === "number" &&
+      Number.isFinite(dueInMinutesRaw) &&
+      dueInMinutesRaw > 0
+        ? Math.round(dueInMinutesRaw)
+        : typeof dueInMinutesRaw === "string" &&
+            Number.isFinite(Number(dueInMinutesRaw)) &&
+            Number(dueInMinutesRaw) > 0
+          ? Math.round(Number(dueInMinutesRaw))
+          : null;
     const dueAt =
-      typeof action.dueAt === "string" && action.dueAt.trim()
-        ? action.dueAt.trim()
-        : null;
+      dueInMinutes != null
+        ? new Date(Date.now() + dueInMinutes * 60_000).toISOString()
+        : typeof action.dueAt === "string" && action.dueAt.trim()
+          ? action.dueAt.trim()
+          : null;
     return {
       op: "add",
       title,
       dueAt,
+      dueInMinutes,
       recurrence: asRecurrence(action.recurrence),
       suggested: Boolean(action.suggested),
     };

@@ -624,7 +624,7 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
           testOk: "Test gesendet — schau außerhalb der App",
           subscribed: "Dieses Gerät ist angemeldet.",
           notSubscribed:
-            "Dieses Gerät ist noch nicht angemeldet. Tippe erneut auf Push einschalten.",
+            "Dieses iPhone/Gerät ist noch nicht angemeldet — nur ein anderes Gerät. Tippe auf Push einschalten.",
         },
       };
     case "en":
@@ -752,7 +752,7 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
           testOk: "Test sent — check outside the app",
           subscribed: "This device is subscribed.",
           notSubscribed:
-            "This device is not subscribed yet. Tap Turn push on again.",
+            "This phone/device is not subscribed yet — only another device is. Tap Turn push on.",
         },
       };
     default: {

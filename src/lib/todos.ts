@@ -19,6 +19,8 @@ export type TodoAddAction = {
   op: "add";
   title: string;
   dueAt?: string | null;
+  /** Relative reminder: minutes from now (preferred for "in X minutes"). */
+  dueInMinutes?: number | null;
   recurrence?: TodoRecurrence;
   suggested?: boolean;
 };
@@ -207,11 +209,17 @@ export async function applyTodoActions(
     if (action.op === "add") {
       const title = action.title?.trim();
       if (!title) continue;
+      const dueAt =
+        typeof action.dueInMinutes === "number" &&
+        Number.isFinite(action.dueInMinutes) &&
+        action.dueInMinutes > 0
+          ? new Date(Date.now() + action.dueInMinutes * 60_000).toISOString()
+          : (action.dueAt ?? null);
       await createTodo({
         title,
         status: action.suggested ? "suggested" : "open",
         source: "maria",
-        dueAt: action.dueAt ?? null,
+        dueAt,
         recurrence: action.recurrence ?? "none",
       });
       continue;

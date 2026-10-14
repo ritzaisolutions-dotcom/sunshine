@@ -15,8 +15,10 @@ import {
   disablePush,
   enablePush,
   fetchNotificationPrefs,
+  hasActivePushSubscription,
   pushSupported,
   saveNotificationPrefs,
+  sendTestPush,
 } from "@/lib/push-client";
 import {
   loadNotificationPrefs,
@@ -31,6 +33,7 @@ export default function SettingsPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [supported, setSupported] = useState(true);
+  const [deviceSubscribed, setDeviceSubscribed] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission | "unknown">(
     "unknown"
   );
@@ -38,6 +41,14 @@ export default function SettingsPage() {
   const syncLocal = useCallback((next: NotificationPrefs) => {
     setPrefs(next);
     saveNotificationPrefsLocal(next);
+  }, []);
+
+  const refreshDevice = useCallback(async () => {
+    const active = await hasActivePushSubscription();
+    setDeviceSubscribed(active);
+    if (typeof Notification !== "undefined") {
+      setPermission(Notification.permission);
+    }
   }, []);
 
   useEffect(() => {
@@ -49,7 +60,8 @@ export default function SettingsPage() {
     void fetchNotificationPrefs()
       .then((remote) => syncLocal(remote))
       .catch(() => undefined);
-  }, [syncLocal]);
+    void refreshDevice();
+  }, [refreshDevice, syncLocal]);
 
   const flash = (text: string) => {
     setMessage(text);
@@ -83,14 +95,10 @@ export default function SettingsPage() {
     try {
       const next = await enablePush(prefs);
       syncLocal(next);
-      if (typeof Notification !== "undefined") {
-        setPermission(Notification.permission);
-      }
+      await refreshDevice();
       flash(copy.enabled);
     } catch (err) {
-      if (typeof Notification !== "undefined") {
-        setPermission(Notification.permission);
-      }
+      await refreshDevice();
       flash(
         err instanceof Error && err.message.includes("permission")
           ? copy.denied
@@ -106,6 +114,7 @@ export default function SettingsPage() {
     try {
       const next = await disablePush(prefs);
       syncLocal(next);
+      setDeviceSubscribed(false);
       flash(copy.disabled);
     } catch {
       flash(copy.failed);
@@ -113,6 +122,20 @@ export default function SettingsPage() {
       setBusy(false);
     }
   };
+
+  const runTest = async () => {
+    setBusy(true);
+    try {
+      await sendTestPush();
+      flash(copy.testOk);
+    } catch {
+      flash(copy.failed);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const needsDeviceSignup = prefs.enabled && !deviceSubscribed && supported;
 
   return (
     <div className="sunshine-shell relative min-h-screen text-rapunzel-ink">
@@ -144,7 +167,7 @@ export default function SettingsPage() {
         <section className="space-y-5 rounded-[1.5rem] border border-white/80 bg-card/80 p-5 shadow-sm">
           <div className="flex items-start gap-3">
             <div className="grid size-10 shrink-0 place-items-center rounded-full bg-rapunzel-gold/35 text-rapunzel-ink">
-              {prefs.enabled ? (
+              {prefs.enabled && deviceSubscribed ? (
                 <Bell className="size-5" aria-hidden />
               ) : (
                 <BellOff className="size-5" aria-hidden />
@@ -156,11 +179,25 @@ export default function SettingsPage() {
                 {copy.pushBlurb}
               </p>
               <p className="mt-2 text-xs text-rapunzel-plum/70">{copy.iosHint}</p>
+              {supported && prefs.enabled ? (
+                <p className="mt-2 text-xs text-rapunzel-ink/70">
+                  {deviceSubscribed ? copy.subscribed : copy.notSubscribed}
+                </p>
+              ) : null}
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {prefs.enabled ? (
+            {!prefs.enabled || needsDeviceSignup ? (
+              <Button
+                type="button"
+                disabled={busy || !supported}
+                className="rounded-full bg-rapunzel-gold text-rapunzel-ink hover:bg-rapunzel-gold-deep"
+                onClick={() => void turnOn()}
+              >
+                {copy.turnOn}
+              </Button>
+            ) : (
               <Button
                 type="button"
                 disabled={busy}
@@ -170,16 +207,18 @@ export default function SettingsPage() {
               >
                 {copy.turnOff}
               </Button>
-            ) : (
+            )}
+            {deviceSubscribed ? (
               <Button
                 type="button"
-                disabled={busy || !supported}
-                className="rounded-full bg-rapunzel-gold text-rapunzel-ink hover:bg-rapunzel-gold-deep"
-                onClick={() => void turnOn()}
+                disabled={busy}
+                variant="outline"
+                className="rounded-full border-rapunzel-gold/70"
+                onClick={() => void runTest()}
               >
-                {copy.turnOn}
+                {copy.testPush}
               </Button>
-            )}
+            ) : null}
             {message ? (
               <span className="text-xs text-rapunzel-plum">{message}</span>
             ) : null}
