@@ -40,6 +40,7 @@ export type ChatCopy = {
   projectKnowledgeNeedText: string;
   projectKnowledgeDrop: string;
   projectKnowledgeImageStub: string;
+  projectKnowledgeSaved: string;
   hideNotes: string;
   todosNav: string;
   settingsNav: string;
@@ -550,6 +551,7 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         projectKnowledgeDrop: "GoodNotes-PDF oder Text hier ablegen",
         projectKnowledgeImageStub:
           "[GoodNotes-/Bildseite]\nBitte den Inhalt der Seite hier kurz beschreiben — Maria nutzt diesen Text in jedem Chat.",
+        projectKnowledgeSaved: "Auch im Projektwissen gesichert.",
         hideNotes: "Notizen aus",
         todosNav: "To-dos",
         settingsNav: "Einstellungen",
@@ -698,6 +700,7 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         projectKnowledgeDrop: "Drop GoodNotes PDF or text here",
         projectKnowledgeImageStub:
           "[GoodNotes / image page]\nPlease briefly describe this page here — Maria uses this text in every chat.",
+        projectKnowledgeSaved: "Also saved to project knowledge.",
         hideNotes: "Hide notes",
         todosNav: "To-dos",
         settingsNav: "Settings",

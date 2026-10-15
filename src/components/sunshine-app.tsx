@@ -12,6 +12,7 @@ import {
 } from "react";
 import {
   Archive,
+  Bookmark,
   ListTodo,
   Menu,
   Mic,
@@ -237,6 +238,98 @@ async function extractKnowledgeText(file: File): Promise<string | null> {
   }
 }
 
+type KnowledgeBuildResult = {
+  docs: KnowledgeDoc[];
+  needText: boolean;
+  tooLarge: boolean;
+  failed: boolean;
+};
+
+async function buildKnowledgeDocsFromFiles(
+  files: File[],
+  imageStub: string
+): Promise<KnowledgeBuildResult> {
+  const docs: KnowledgeDoc[] = [];
+  let needText = false;
+  let tooLarge = false;
+  let failed = false;
+
+  for (const file of files) {
+    if (file.size > MAX_ATTACH_BYTES) {
+      tooLarge = true;
+      continue;
+    }
+    const mime = guessMimeType(file);
+    if (isUnsupportedAttachMime(mime)) {
+      needText = true;
+      continue;
+    }
+
+    const baseTitle = file.name.replace(/\.[^.]+$/, "").trim() || file.name;
+
+    if (mime.startsWith("image/")) {
+      docs.push({
+        id: newId(),
+        title: baseTitle,
+        content: imageStub,
+        sourceName: file.name,
+        updatedAt: new Date().toISOString(),
+      });
+      continue;
+    }
+
+    try {
+      const content = await extractKnowledgeText(file);
+      if (!content) {
+        docs.push({
+          id: newId(),
+          title: baseTitle,
+          content: imageStub,
+          sourceName: file.name,
+          updatedAt: new Date().toISOString(),
+        });
+        needText = true;
+        continue;
+      }
+      docs.push({
+        id: newId(),
+        title: baseTitle,
+        content,
+        sourceName: file.name,
+        updatedAt: new Date().toISOString(),
+      });
+    } catch {
+      failed = true;
+    }
+  }
+
+  return { docs, needText, tooLarge, failed };
+}
+
+function mergeKnowledgeDocs(
+  notes: NourieNotes,
+  incoming: KnowledgeDoc[]
+): NourieNotes {
+  if (!incoming.length) return notes;
+  const existingKeys = new Set(
+    (notes.knowledgeDocs ?? []).map(
+      (doc) => doc.sourceName?.toLowerCase() || doc.title.toLowerCase()
+    )
+  );
+  const fresh = incoming.filter((doc) => {
+    const key = doc.sourceName?.toLowerCase() || doc.title.toLowerCase();
+    if (existingKeys.has(key)) return false;
+    existingKeys.add(key);
+    return true;
+  });
+  if (!fresh.length) return notes;
+  return {
+    ...notes,
+    knowledgeDocs: [...fresh, ...(notes.knowledgeDocs ?? [])],
+    lastUpdated: new Date().toISOString(),
+  };
+}
+
 function newId() {
   return crypto.randomUUID();
 }
@@ -297,6 +390,7 @@ export function SunshineApp() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
+  const [knowledgeSavedHint, setKnowledgeSavedHint] = useState(false);
   const [fileDragActive, setFileDragActive] = useState(false);
   const [listening, setListening] = useState(false);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
@@ -488,6 +582,7 @@ export function SunshineApp() {
     if (!list.length) return;
 
     const next: PendingFile[] = [];
+    const originalsForKnowledge: File[] = [];
     let tooLarge = false;
     let unsupported = false;
     let failed = false;
@@ -518,6 +613,7 @@ export function SunshineApp() {
           size: prepared.size,
           dataBase64,
         });
+        originalsForKnowledge.push(file);
       } catch {
         failed = true;
       }
@@ -526,6 +622,18 @@ export function SunshineApp() {
     if (next.length) {
       setPendingFiles((prev) => [...prev, ...next]);
       setError(null);
+
+      // Same paperclip / drop / paste also secures docs in project knowledge (Supabase vault).
+      const knowledge = await buildKnowledgeDocsFromFiles(
+        originalsForKnowledge,
+        copy.projectKnowledgeImageStub
+      );
+      if (knowledge.docs.length) {
+        setNotes((prev) => mergeKnowledgeDocs(prev, knowledge.docs));
+        setKnowledgeSavedHint(true);
+        window.setTimeout(() => setKnowledgeSavedHint(false), 4000);
+      }
+      if (knowledge.needText) setError(copy.projectKnowledgeNeedText);
     }
     if (unsupported) setError(copy.attachUnsupported);
     else if (tooLarge) setError(copy.attachTooLarge);
@@ -1421,25 +1529,36 @@ export function SunshineApp() {
             ) : null}
 
             {pendingFiles.length > 0 && (
-              <div className="flex flex-wrap gap-2 px-4 pb-2 md:px-8">
-                {pendingFiles.map((f) => (
-                  <span
-                    key={f.id}
-                    className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs"
-                  >
-                    {f.name}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setPendingFiles((prev) =>
-                          prev.filter((p) => p.id !== f.id)
-                        )
-                      }
+              <div className="space-y-1.5 px-4 pb-2 md:px-8">
+                <div className="flex flex-wrap gap-2">
+                  {pendingFiles.map((f) => (
+                    <span
+                      key={f.id}
+                      className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs"
                     >
-                      <X className="size-3" />
-                    </button>
-                  </span>
-                ))}
+                      <Bookmark
+                        className="size-3 text-rapunzel-gold"
+                        aria-hidden
+                      />
+                      {f.name}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPendingFiles((prev) =>
+                            prev.filter((p) => p.id !== f.id)
+                          )
+                        }
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                {knowledgeSavedHint ? (
+                  <p className="text-[11px] text-rapunzel-plum/80">
+                    {copy.projectKnowledgeSaved}
+                  </p>
+                ) : null}
               </div>
             )}
 
@@ -1662,64 +1781,12 @@ function KnowledgeEditor({
     if (!list.length) return;
     setBusy(true);
     onError(null);
-    const added: KnowledgeDoc[] = [];
-    let needText = false;
-    let failed = false;
-    let tooLarge = false;
-
-    for (const file of list) {
-      if (file.size > MAX_ATTACH_BYTES) {
-        tooLarge = true;
-        continue;
-      }
-      const mime = guessMimeType(file);
-      if (isUnsupportedAttachMime(mime)) {
-        needText = true;
-        continue;
-      }
-
-      const baseTitle = file.name.replace(/\.[^.]+$/, "").trim() || file.name;
-
-      // GoodNotes page exports are often images — pin a stub Noorie can fill in.
-      if (mime.startsWith("image/")) {
-        added.push({
-          id: newId(),
-          title: baseTitle,
-          content: copy.projectKnowledgeImageStub,
-          sourceName: file.name,
-          updatedAt: new Date().toISOString(),
-        });
-        continue;
-      }
-
-      try {
-        const content = await extractKnowledgeText(file);
-        if (!content) {
-          // Binary GoodNotes PDFs: still create an editable shell.
-          added.push({
-            id: newId(),
-            title: baseTitle,
-            content: copy.projectKnowledgeImageStub,
-            sourceName: file.name,
-            updatedAt: new Date().toISOString(),
-          });
-          needText = true;
-          continue;
-        }
-        added.push({
-          id: newId(),
-          title: baseTitle,
-          content,
-          sourceName: file.name,
-          updatedAt: new Date().toISOString(),
-        });
-      } catch {
-        failed = true;
-      }
-    }
+    const { docs: added, needText, tooLarge, failed } =
+      await buildKnowledgeDocsFromFiles(list, copy.projectKnowledgeImageStub);
 
     if (added.length) {
-      updateDocs([...added, ...docs]);
+      const merged = mergeKnowledgeDocs(notes, added);
+      onChange(merged);
       setExpandedId(added[0]?.id ?? null);
     }
     if (needText) onError(copy.projectKnowledgeNeedText);
