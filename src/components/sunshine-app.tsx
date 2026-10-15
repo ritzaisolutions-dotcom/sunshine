@@ -111,7 +111,7 @@ const ATTACH_ACCEPT =
   "image/*,image/jpeg,image/png,image/webp,image/gif,application/pdf,text/plain,text/markdown,.pdf,.txt,.md,.doc,.docx";
 
 const KNOWLEDGE_ACCEPT =
-  "application/pdf,text/plain,text/markdown,.pdf,.txt,.md,.doc,.docx";
+  "image/*,application/pdf,text/plain,text/markdown,.pdf,.txt,.md,.doc,.docx";
 
 const MAX_KNOWLEDGE_FILE_CHARS = 80_000;
 
@@ -1646,6 +1646,8 @@ function KnowledgeEditor({
   const docs = notes.knowledgeDocs ?? [];
   const [busy, setBusy] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const dragDepthRef = useRef(0);
 
   const updateDocs = (nextDocs: KnowledgeDoc[]) => {
     onChange({
@@ -1655,7 +1657,7 @@ function KnowledgeEditor({
     });
   };
 
-  const onAddFiles = async (files: FileList | null) => {
+  const onAddFiles = async (files: FileList | File[] | null) => {
     const list = files ? Array.from(files) : [];
     if (!list.length) return;
     setBusy(true);
@@ -1671,17 +1673,39 @@ function KnowledgeEditor({
         continue;
       }
       const mime = guessMimeType(file);
-      if (mime.startsWith("image/") || isUnsupportedAttachMime(mime)) {
+      if (isUnsupportedAttachMime(mime)) {
         needText = true;
         continue;
       }
+
+      const baseTitle = file.name.replace(/\.[^.]+$/, "").trim() || file.name;
+
+      // GoodNotes page exports are often images — pin a stub Noorie can fill in.
+      if (mime.startsWith("image/")) {
+        added.push({
+          id: newId(),
+          title: baseTitle,
+          content: copy.projectKnowledgeImageStub,
+          sourceName: file.name,
+          updatedAt: new Date().toISOString(),
+        });
+        continue;
+      }
+
       try {
         const content = await extractKnowledgeText(file);
         if (!content) {
+          // Binary GoodNotes PDFs: still create an editable shell.
+          added.push({
+            id: newId(),
+            title: baseTitle,
+            content: copy.projectKnowledgeImageStub,
+            sourceName: file.name,
+            updatedAt: new Date().toISOString(),
+          });
           needText = true;
           continue;
         }
-        const baseTitle = file.name.replace(/\.[^.]+$/, "").trim() || file.name;
         added.push({
           id: newId(),
           title: baseTitle,
@@ -1704,8 +1728,56 @@ function KnowledgeEditor({
     setBusy(false);
   };
 
+  const onDragEnter = (event: DragEvent<HTMLElement>) => {
+    if (!dataTransferHasFiles(event.dataTransfer)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    dragDepthRef.current += 1;
+    setDragActive(true);
+  };
+
+  const onDragLeave = (event: DragEvent<HTMLElement>) => {
+    if (!dataTransferHasFiles(event.dataTransfer)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+    if (dragDepthRef.current === 0) setDragActive(false);
+  };
+
+  const onDragOver = (event: DragEvent<HTMLElement>) => {
+    if (!dataTransferHasFiles(event.dataTransfer)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = "copy";
+  };
+
+  const onDrop = (event: DragEvent<HTMLElement>) => {
+    if (!dataTransferHasFiles(event.dataTransfer)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    dragDepthRef.current = 0;
+    setDragActive(false);
+    void onAddFiles(event.dataTransfer.files);
+  };
+
   return (
-    <div className="space-y-3">
+    <div
+      className={cn(
+        "space-y-3 rounded-2xl border border-dashed p-3 transition-colors",
+        dragActive
+          ? "border-rapunzel-gold bg-rapunzel-gold/15"
+          : "border-transparent"
+      )}
+      onDragEnter={onDragEnter}
+      onDragLeave={onDragLeave}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+    >
+      {dragActive ? (
+        <p className="text-center text-xs font-medium text-rapunzel-plum">
+          {copy.projectKnowledgeDrop}
+        </p>
+      ) : null}
       <label className="relative inline-flex cursor-pointer items-center gap-2 rounded-full border border-input bg-card px-3 py-1.5 text-xs font-medium text-rapunzel-plum hover:bg-rapunzel-gold/30">
         <input
           type="file"

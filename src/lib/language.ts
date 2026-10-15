@@ -38,6 +38,8 @@ export type ChatCopy = {
   projectKnowledgeContent: string;
   projectKnowledgeDelete: string;
   projectKnowledgeNeedText: string;
+  projectKnowledgeDrop: string;
+  projectKnowledgeImageStub: string;
   hideNotes: string;
   todosNav: string;
   settingsNav: string;
@@ -536,14 +538,18 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         aboutNoorie: "Über Noorie",
         projectKnowledge: "Projektwissen",
         projectKnowledgeBlurb:
-          "Dateien und Notizen, die Maria in jedem Chat mitnimmt (in Supabase gesichert).",
+          "Dateien und Notizen, die Maria in jedem Chat mitnimmt (in Supabase gesichert). GoodNotes: PDF oder Seite hierher ziehen.",
         projectKnowledgeAdd: "Datei hinzufügen",
-        projectKnowledgeEmpty: "Noch kein Projektwissen — Text oder PDF hinzufügen.",
+        projectKnowledgeEmpty:
+          "Noch kein Projektwissen — Text/PDF hierher ziehen oder hinzufügen.",
         projectKnowledgeTitle: "Titel",
         projectKnowledgeContent: "Inhalt",
         projectKnowledgeDelete: "Entfernen",
         projectKnowledgeNeedText:
-          "Für Projektwissen bitte Text, Markdown oder ein lesbares PDF nehmen (keine Fotos).",
+          "Datei konnte nicht als Text gelesen werden. Aus GoodNotes als PDF exportieren oder den Inhalt hier eintippen.",
+        projectKnowledgeDrop: "GoodNotes-PDF oder Text hier ablegen",
+        projectKnowledgeImageStub:
+          "[GoodNotes-/Bildseite]\nBitte den Inhalt der Seite hier kurz beschreiben — Maria nutzt diesen Text in jedem Chat.",
         hideNotes: "Notizen aus",
         todosNav: "To-dos",
         settingsNav: "Einstellungen",
@@ -680,14 +686,18 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         aboutNoorie: "About Noorie",
         projectKnowledge: "Project knowledge",
         projectKnowledgeBlurb:
-          "Files and notes Maria brings into every chat (saved in Supabase).",
+          "Files and notes Maria brings into every chat (saved in Supabase). GoodNotes: drop a PDF or page here.",
         projectKnowledgeAdd: "Add file",
-        projectKnowledgeEmpty: "No project knowledge yet — add text or a PDF.",
+        projectKnowledgeEmpty:
+          "No project knowledge yet — drop or add text/PDF here.",
         projectKnowledgeTitle: "Title",
         projectKnowledgeContent: "Content",
         projectKnowledgeDelete: "Remove",
         projectKnowledgeNeedText:
-          "For project knowledge, please use text, Markdown, or a readable PDF (not photos).",
+          "Could not read that file as text. Export from GoodNotes as PDF, or type the content here.",
+        projectKnowledgeDrop: "Drop GoodNotes PDF or text here",
+        projectKnowledgeImageStub:
+          "[GoodNotes / image page]\nPlease briefly describe this page here — Maria uses this text in every chat.",
         hideNotes: "Hide notes",
         todosNav: "To-dos",
         settingsNav: "Settings",
