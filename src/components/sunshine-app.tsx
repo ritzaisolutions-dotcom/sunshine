@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
   type ClipboardEvent,
+  type DragEvent,
 } from "react";
 import {
   Archive,
@@ -91,11 +92,62 @@ import {
 import { cn } from "@/lib/utils";
 
 type PendingFile = {
+  id: string;
   name: string;
   mimeType: string;
   size: number;
   dataBase64: string;
 };
+
+const MAX_ATTACH_BYTES = 10 * 1024 * 1024;
+
+const ATTACH_ACCEPT =
+  "image/*,image/jpeg,image/png,image/webp,image/gif,application/pdf,text/plain,text/markdown,.pdf,.txt,.md,.doc,.docx";
+
+function guessMimeType(file: File): string {
+  if (file.type) return file.type;
+  const name = file.name.toLowerCase();
+  if (name.endsWith(".pdf")) return "application/pdf";
+  if (name.endsWith(".png")) return "image/png";
+  if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return "image/jpeg";
+  if (name.endsWith(".webp")) return "image/webp";
+  if (name.endsWith(".gif")) return "image/gif";
+  if (name.endsWith(".heic")) return "image/heic";
+  if (name.endsWith(".heif")) return "image/heif";
+  if (name.endsWith(".txt") || name.endsWith(".md")) return "text/plain";
+  if (name.endsWith(".docx")) {
+    return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  }
+  if (name.endsWith(".doc")) return "application/msword";
+  return "application/octet-stream";
+}
+
+function isUnsupportedAttachMime(mimeType: string): boolean {
+  const mime = mimeType.toLowerCase();
+  return mime === "image/heic" || mime === "image/heif";
+}
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result !== "string") {
+        reject(new Error("Could not read file"));
+        return;
+      }
+      const comma = result.indexOf(",");
+      resolve(comma >= 0 ? result.slice(comma + 1) : result);
+    };
+    reader.onerror = () => reject(reader.error ?? new Error("Could not read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function dataTransferHasFiles(dataTransfer: DataTransfer | null): boolean {
+  if (!dataTransfer) return false;
+  return Array.from(dataTransfer.types as ArrayLike<string>).includes("Files");
+}
 
 function newId() {
   return crypto.randomUUID();
@@ -157,6 +209,7 @@ export function SunshineApp() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
+  const [fileDragActive, setFileDragActive] = useState(false);
   const [listening, setListening] = useState(false);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const [voiceLang, setVoiceLang] = useState<ReplyLanguage | null>(null);
@@ -168,6 +221,7 @@ export function SunshineApp() {
   const [todos, setTodos] = useState<SunshineTodo[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const fileDragDepthRef = useRef(0);
   const recognitionRef = useRef<{ stop: () => void } | null>(null);
   const skipNextPushRef = useRef(false);
   const cloudEnabledRef = useRef(false);
@@ -344,25 +398,48 @@ export function SunshineApp() {
   const onPickFiles = async (files: FileList | File[] | null) => {
     const list = files ? Array.from(files) : [];
     if (!list.length) return;
+
     const next: PendingFile[] = [];
+    let tooLarge = false;
+    let unsupported = false;
+    let failed = false;
+
     for (const [index, file] of list.entries()) {
-      const buffer = await file.arrayBuffer();
-      const bytes = new Uint8Array(buffer);
-      let binary = "";
-      bytes.forEach((b) => {
-        binary += String.fromCharCode(b);
-      });
-      const fallbackExt = file.type.startsWith("image/")
-        ? file.type.split("/")[1] || "png"
-        : "bin";
-      next.push({
-        name: file.name?.trim() || `paste-${index + 1}.${fallbackExt}`,
-        mimeType: file.type || "application/octet-stream",
-        size: file.size,
-        dataBase64: btoa(binary),
-      });
+      if (file.size > MAX_ATTACH_BYTES) {
+        tooLarge = true;
+        continue;
+      }
+
+      const mimeType = guessMimeType(file);
+      if (isUnsupportedAttachMime(mimeType)) {
+        unsupported = true;
+        continue;
+      }
+
+      try {
+        const dataBase64 = await fileToBase64(file);
+        const fallbackExt = mimeType.startsWith("image/")
+          ? mimeType.split("/")[1] || "png"
+          : "bin";
+        next.push({
+          id: newId(),
+          name: file.name?.trim() || `file-${index + 1}.${fallbackExt}`,
+          mimeType,
+          size: file.size,
+          dataBase64,
+        });
+      } catch {
+        failed = true;
+      }
     }
-    setPendingFiles((prev) => [...prev, ...next]);
+
+    if (next.length) {
+      setPendingFiles((prev) => [...prev, ...next]);
+      setError(null);
+    }
+    if (unsupported) setError(copy.attachUnsupported);
+    else if (tooLarge) setError(copy.attachTooLarge);
+    else if (failed) setError(copy.attachFailed);
   };
 
   const onPasteIntoChat = (event: ClipboardEvent<HTMLElement>) => {
@@ -379,6 +456,38 @@ export function SunshineApp() {
 
     event.preventDefault();
     void onPickFiles(files);
+  };
+
+  const onFileDragEnter = (event: DragEvent<HTMLElement>) => {
+    if (!dataTransferHasFiles(event.dataTransfer)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    fileDragDepthRef.current += 1;
+    setFileDragActive(true);
+  };
+
+  const onFileDragLeave = (event: DragEvent<HTMLElement>) => {
+    if (!dataTransferHasFiles(event.dataTransfer)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    fileDragDepthRef.current = Math.max(0, fileDragDepthRef.current - 1);
+    if (fileDragDepthRef.current === 0) setFileDragActive(false);
+  };
+
+  const onFileDragOver = (event: DragEvent<HTMLElement>) => {
+    if (!dataTransferHasFiles(event.dataTransfer)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = "copy";
+  };
+
+  const onFileDrop = (event: DragEvent<HTMLElement>) => {
+    if (!dataTransferHasFiles(event.dataTransfer)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    fileDragDepthRef.current = 0;
+    setFileDragActive(false);
+    void onPickFiles(event.dataTransfer.files);
   };
 
   const toggleMic = () => {
@@ -1004,7 +1113,18 @@ export function SunshineApp() {
         </header>
 
         <div className="flex min-h-0 flex-1">
-          <section className="flex min-w-0 flex-1 flex-col">
+          <section
+            className="relative flex min-w-0 flex-1 flex-col"
+            onDragEnter={onFileDragEnter}
+            onDragLeave={onFileDragLeave}
+            onDragOver={onFileDragOver}
+            onDrop={onFileDrop}
+          >
+            {fileDragActive ? (
+              <div className="pointer-events-none absolute inset-3 z-20 flex items-center justify-center rounded-3xl border-2 border-dashed border-rapunzel-gold bg-rapunzel-gold/15 text-sm font-medium text-rapunzel-plum backdrop-blur-[1px]">
+                {copy.attachDrop}
+              </div>
+            ) : null}
             <div
               className={cn(
                 "mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 overflow-y-auto px-4 py-8 md:px-6",
@@ -1196,7 +1316,7 @@ export function SunshineApp() {
               <div className="flex flex-wrap gap-2 px-4 pb-2 md:px-8">
                 {pendingFiles.map((f) => (
                   <span
-                    key={f.name + f.size}
+                    key={f.id}
                     className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs"
                   >
                     {f.name}
@@ -1204,7 +1324,7 @@ export function SunshineApp() {
                       type="button"
                       onClick={() =>
                         setPendingFiles((prev) =>
-                          prev.filter((p) => p.name !== f.name)
+                          prev.filter((p) => p.id !== f.id)
                         )
                       }
                     >
@@ -1217,27 +1337,36 @@ export function SunshineApp() {
 
             <div className="px-4 pb-5 pt-2 md:px-6">
               <div
-                className="mx-auto flex w-full max-w-2xl items-end gap-2 rounded-[1.75rem] border border-input bg-card p-2 shadow-[0_12px_40px_-24px_color-mix(in_srgb,var(--primary)_45%,transparent)]"
+                className={cn(
+                  "mx-auto flex w-full max-w-2xl items-end gap-2 rounded-[1.75rem] border bg-card p-2 shadow-[0_12px_40px_-24px_color-mix(in_srgb,var(--primary)_45%,transparent)]",
+                  fileDragActive
+                    ? "border-rapunzel-gold ring-2 ring-rapunzel-gold/40"
+                    : "border-input"
+                )}
                 onPaste={onPasteIntoChat}
               >
-                <input
-                  ref={fileRef}
-                  type="file"
-                  className="hidden"
-                  multiple
-                  accept=".pdf,.txt,.md,.docx,image/*,.doc"
-                  onChange={(e) => void onPickFiles(e.target.files)}
-                />
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className="rounded-full text-rapunzel-plum"
-                  onClick={() => fileRef.current?.click()}
+                {/*
+                  iOS Safari / standalone PWA: display:none file inputs often
+                  ignore programmatic .click(). Keep the input in the hit target.
+                */}
+                <label
+                  className="relative inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-rapunzel-plum hover:bg-muted"
                   title={copy.attach}
+                  aria-label={copy.attach}
                 >
-                  <Paperclip className="size-5" />
-                </Button>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    multiple
+                    accept={ATTACH_ACCEPT}
+                    className="absolute inset-0 z-10 cursor-pointer opacity-0"
+                    onChange={(e) => {
+                      void onPickFiles(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+                  <Paperclip className="pointer-events-none size-5" />
+                </label>
                 <div className="flex items-center gap-0.5 rounded-full border border-border/70 bg-white/50 p-0.5">
                   {(["de", "en"] as const).map((code) => (
                     <button

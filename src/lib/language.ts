@@ -36,6 +36,10 @@ export type ChatCopy = {
   edit: string;
   tryAgain: string;
   attach: string;
+  attachDrop: string;
+  attachTooLarge: string;
+  attachFailed: string;
+  attachUnsupported: string;
   closeMenu: string;
   opening: string;
   tagline: string;
@@ -528,6 +532,11 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         edit: "Bearbeiten",
         tryAgain: "Nochmal",
         attach: "Anhang",
+        attachDrop: "Datei hier ablegen",
+        attachTooLarge: "Datei zu groß (max. 10 MB).",
+        attachFailed: "Datei konnte nicht gelesen werden.",
+        attachUnsupported:
+          "Dieses Dateiformat wird auf dem iPhone nicht unterstützt. Bitte JPEG, PNG oder PDF nehmen.",
         closeMenu: "Menü schließen",
         opening: "Sunshine",
         tagline: "Maria Sunshine für Noorie",
@@ -656,6 +665,11 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         edit: "Edit",
         tryAgain: "Try again",
         attach: "Attach",
+        attachDrop: "Drop file here",
+        attachTooLarge: "File too large (max 10 MB).",
+        attachFailed: "Could not read that file.",
+        attachUnsupported:
+          "This file type is not supported on iPhone. Please use JPEG, PNG, or PDF.",
         closeMenu: "Close menu",
         opening: "Sunshine",
         tagline: "Maria Sunshine for Noorie",
