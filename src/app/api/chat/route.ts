@@ -26,6 +26,7 @@ type ChatBody = {
   messages: IncomingMessage[];
   systemPrompt?: string;
   notesDocument?: string;
+  knowledgeDocument?: string;
   todosDocument?: string;
   apiKey?: string;
   attachments?: IncomingAttachment[];
@@ -117,6 +118,9 @@ export async function POST(req: NextRequest) {
     `\n\n${TITLE_RULE}`,
     body.notesDocument
       ? `\n\nAbout Noorie (living memory — use this, do not invent):\n${body.notesDocument}`
+      : "",
+    body.knowledgeDocument?.trim()
+      ? `\n\nProject knowledge (use this, do not invent):\n${body.knowledgeDocument}`
       : "",
     body.todosDocument
       ? `\n\nNoorie's Sunshine to-dos (use this, do not invent missing ones):\n${body.todosDocument}`

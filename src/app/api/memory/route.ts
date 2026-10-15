@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { MEMORY_MERGE_PROMPT } from "@/lib/prompts";
-import { EMPTY_NOTES, NourieNotes } from "@/lib/types";
+import { normalizeNotes, type NourieNotes } from "@/lib/types";
 
 type MemoryBody = {
   notes: NourieNotes;
@@ -25,8 +25,10 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const current = { ...EMPTY_NOTES, ...body.notes };
-  const userPayload = `Current notes JSON:\n${JSON.stringify(current, null, 2)}\n\nLatest chat transcript:\n${body.recentTranscript}`;
+  const current = normalizeNotes(body.notes);
+  // Project knowledge is user-managed; never send it to the merge model.
+  const { knowledgeDocs, ...memoryFields } = current;
+  const userPayload = `Current notes JSON:\n${JSON.stringify(memoryFields, null, 2)}\n\nLatest chat transcript:\n${body.recentTranscript}`;
 
   const upstream = await fetch("https://api.mistral.ai/v1/chat/completions", {
     method: "POST",
@@ -72,6 +74,7 @@ export async function POST(req: NextRequest) {
       ),
       getsStuckOn: String(parsed.getsStuckOn ?? current.getsStuckOn),
       littleThings: String(parsed.littleThings ?? current.littleThings),
+      knowledgeDocs,
       lastUpdated: new Date().toISOString(),
     };
     return NextResponse.json({ notes: merged });

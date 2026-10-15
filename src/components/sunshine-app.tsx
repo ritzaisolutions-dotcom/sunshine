@@ -86,7 +86,10 @@ import {
   ChatMessage,
   ChatThread,
   EMPTY_NOTES,
+  KnowledgeDoc,
   NourieNotes,
+  knowledgeToDocument,
+  normalizeNotes,
   notesToDocument,
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -99,10 +102,18 @@ type PendingFile = {
   dataBase64: string;
 };
 
-const MAX_ATTACH_BYTES = 10 * 1024 * 1024;
+/** Raw file cap after compression. Vercel request bodies max ~4.5 MB. */
+const MAX_ATTACH_BYTES = 2.5 * 1024 * 1024;
+/** Leave headroom for chat JSON + base64 overhead under Vercel's 4.5 MB limit. */
+const MAX_CHAT_BODY_CHARS = 3_600_000;
 
 const ATTACH_ACCEPT =
   "image/*,image/jpeg,image/png,image/webp,image/gif,application/pdf,text/plain,text/markdown,.pdf,.txt,.md,.doc,.docx";
+
+const KNOWLEDGE_ACCEPT =
+  "application/pdf,text/plain,text/markdown,.pdf,.txt,.md,.doc,.docx";
+
+const MAX_KNOWLEDGE_FILE_CHARS = 80_000;
 
 function guessMimeType(file: File): string {
   if (file.type) return file.type;
@@ -144,9 +155,86 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
+/** Shrink photos/GoodNotes page exports so base64 fits Vercel's body limit. */
+async function compressImageForUpload(file: File, mimeType: string): Promise<File> {
+  if (!mimeType.startsWith("image/") || mimeType === "image/gif") return file;
+  if (typeof createImageBitmap !== "function") return file;
+
+  try {
+    const bitmap = await createImageBitmap(file);
+    const attempts: Array<{ maxEdge: number; quality: number }> = [
+      { maxEdge: 1600, quality: 0.8 },
+      { maxEdge: 1280, quality: 0.72 },
+      { maxEdge: 1024, quality: 0.65 },
+    ];
+
+    let best: File | null = null;
+    for (const attempt of attempts) {
+      const scale = Math.min(
+        1,
+        attempt.maxEdge / Math.max(bitmap.width, bitmap.height)
+      );
+      const width = Math.max(1, Math.round(bitmap.width * scale));
+      const height = Math.max(1, Math.round(bitmap.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) break;
+      ctx.drawImage(bitmap, 0, 0, width, height);
+
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, "image/jpeg", attempt.quality)
+      );
+      if (!blob) continue;
+
+      const baseName = file.name.replace(/\.[^.]+$/, "") || "image";
+      const next = new File([blob], `${baseName}.jpg`, { type: "image/jpeg" });
+      best = next;
+      if (next.size <= MAX_ATTACH_BYTES) break;
+    }
+    bitmap.close();
+    return best ?? file;
+  } catch {
+    return file;
+  }
+}
+
 function dataTransferHasFiles(dataTransfer: DataTransfer | null): boolean {
   if (!dataTransfer) return false;
   return Array.from(dataTransfer.types as ArrayLike<string>).includes("Files");
+}
+
+async function extractKnowledgeText(file: File): Promise<string | null> {
+  const mime = guessMimeType(file);
+  if (mime.startsWith("image/")) return null;
+
+  try {
+    if (
+      mime.startsWith("text/") ||
+      mime === "application/json" ||
+      file.name.toLowerCase().endsWith(".md") ||
+      file.name.toLowerCase().endsWith(".txt")
+    ) {
+      const text = (await file.text()).replace(/\u0000/g, "").trim();
+      if (!text) return null;
+      return text.slice(0, MAX_KNOWLEDGE_FILE_CHARS);
+    }
+
+    const buffer = await file.arrayBuffer();
+    const decoded = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
+    const looksBinary =
+      decoded.includes("\u0000") ||
+      (decoded.length > 200 &&
+        decoded.replace(/[\x09\x0a\x0d\x20-\x7e\u00a0-\uffff]/g, "").length >
+          decoded.length * 0.15);
+    if (looksBinary) return null;
+    const text = decoded.trim();
+    if (!text) return null;
+    return text.slice(0, MAX_KNOWLEDGE_FILE_CHARS);
+  } catch {
+    return null;
+  }
 }
 
 function newId() {
@@ -285,7 +373,7 @@ export function SunshineApp() {
         cloudEnabledRef.current = true;
         if (result.found) {
           skipNextPushRef.current = true;
-          setNotes(result.notes);
+          setNotes(normalizeNotes(result.notes));
           if (result.chats.length) {
             setChats(result.chats);
             const preferred = loadActiveChatId();
@@ -405,27 +493,29 @@ export function SunshineApp() {
     let failed = false;
 
     for (const [index, file] of list.entries()) {
-      if (file.size > MAX_ATTACH_BYTES) {
-        tooLarge = true;
-        continue;
-      }
-
-      const mimeType = guessMimeType(file);
-      if (isUnsupportedAttachMime(mimeType)) {
+      const sourceMime = guessMimeType(file);
+      if (isUnsupportedAttachMime(sourceMime)) {
         unsupported = true;
         continue;
       }
 
       try {
-        const dataBase64 = await fileToBase64(file);
+        const prepared = await compressImageForUpload(file, sourceMime);
+        if (prepared.size > MAX_ATTACH_BYTES) {
+          tooLarge = true;
+          continue;
+        }
+
+        const mimeType = guessMimeType(prepared);
+        const dataBase64 = await fileToBase64(prepared);
         const fallbackExt = mimeType.startsWith("image/")
-          ? mimeType.split("/")[1] || "png"
+          ? mimeType.split("/")[1] || "jpg"
           : "bin";
         next.push({
           id: newId(),
-          name: file.name?.trim() || `file-${index + 1}.${fallbackExt}`,
+          name: prepared.name?.trim() || `file-${index + 1}.${fallbackExt}`,
           mimeType,
-          size: file.size,
+          size: prepared.size,
           dataBase64,
         });
       } catch {
@@ -572,24 +662,42 @@ export function SunshineApp() {
     setError(null);
 
     try {
+      // Keep the JSON body under Vercel's ~4.5 MB request limit when files are attached.
+      const historyForRequest = filesForRequest.length
+        ? history.slice(-12)
+        : history;
+      const chatBody = {
+        messages: historyForRequest.map((m) => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        })),
+        systemPrompt: settings.systemPrompt,
+        notesDocument: notesToDocument(notes),
+        knowledgeDocument: knowledgeToDocument(notes.knowledgeDocs ?? []),
+        todosDocument: formatTodosForPrompt(todos),
+        apiKey: settings.mistralApiKey || undefined,
+        attachments: filesForRequest.map(({ name, mimeType, dataBase64 }) => ({
+          name,
+          mimeType,
+          dataBase64,
+        })),
+        lang: replyLanguage,
+      };
+      const body = JSON.stringify(chatBody);
+      if (body.length > MAX_CHAT_BODY_CHARS) {
+        throw new Error(turnCopy.attachTooLarge);
+      }
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: history.map((m) => ({
-            role: m.role as "user" | "assistant",
-            content: m.content,
-          })),
-          systemPrompt: settings.systemPrompt,
-          notesDocument: notesToDocument(notes),
-          todosDocument: formatTodosForPrompt(todos),
-          apiKey: settings.mistralApiKey || undefined,
-          attachments: filesForRequest,
-          lang: replyLanguage,
-        }),
+        body,
       });
 
       if (!res.ok) {
+        if (res.status === 413) {
+          throw new Error(turnCopy.attachTooLarge);
+        }
         const data = (await res.json().catch(() => null)) as {
           error?: string;
         } | null;
@@ -758,7 +866,7 @@ export function SunshineApp() {
         .then(async (r) => {
           if (!r.ok) return;
           const data = (await r.json()) as { notes?: NourieNotes };
-          if (data.notes) setNotes(data.notes);
+          if (data.notes) setNotes(normalizeNotes(data.notes));
         })
         .catch(() => undefined);
 
@@ -1432,14 +1540,32 @@ export function SunshineApp() {
 
           {showNotes && (
             <aside className="sunshine-panel w-full max-w-sm border-l border-border p-4 md:block">
-              <h2 className="mb-3 text-lg font-semibold text-rapunzel-plum">
-                {copy.aboutNoorie}
-              </h2>
-              <NotesEditor
-                notes={notes}
-                lang={activeLanguage}
-                onChange={setNotes}
-              />
+              <div className="max-h-[calc(100vh-6rem)] space-y-8 overflow-y-auto pr-1">
+                <div>
+                  <h2 className="mb-3 text-lg font-semibold text-rapunzel-plum">
+                    {copy.aboutNoorie}
+                  </h2>
+                  <NotesEditor
+                    notes={notes}
+                    lang={activeLanguage}
+                    onChange={setNotes}
+                  />
+                </div>
+                <div>
+                  <h2 className="mb-1 text-lg font-semibold text-rapunzel-plum">
+                    {copy.projectKnowledge}
+                  </h2>
+                  <p className="mb-3 text-xs text-rapunzel-ink/60">
+                    {copy.projectKnowledgeBlurb}
+                  </p>
+                  <KnowledgeEditor
+                    notes={notes}
+                    lang={activeLanguage}
+                    onChange={setNotes}
+                    onError={setError}
+                  />
+                </div>
+              </div>
             </aside>
           )}
         </div>
@@ -1488,7 +1614,7 @@ function NotesEditor({
   );
 
   return (
-    <div className="max-h-[70vh] overflow-y-auto pr-1">
+    <div>
       {notes.lastUpdated ? (
         <p className="mb-3 text-[11px] text-rapunzel-ink/50">
           {copy.lastUpdated(new Date(notes.lastUpdated).toLocaleString())}
@@ -1501,6 +1627,189 @@ function NotesEditor({
       {field("alreadyUnderstands")}
       {field("getsStuckOn")}
       {field("littleThings")}
+    </div>
+  );
+}
+
+function KnowledgeEditor({
+  notes,
+  lang,
+  onChange,
+  onError,
+}: {
+  notes: NourieNotes;
+  lang: ReplyLanguage;
+  onChange: (n: NourieNotes) => void;
+  onError: (message: string | null) => void;
+}) {
+  const copy = chatCopy(lang);
+  const docs = notes.knowledgeDocs ?? [];
+  const [busy, setBusy] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const updateDocs = (nextDocs: KnowledgeDoc[]) => {
+    onChange({
+      ...notes,
+      knowledgeDocs: nextDocs,
+      lastUpdated: new Date().toISOString(),
+    });
+  };
+
+  const onAddFiles = async (files: FileList | null) => {
+    const list = files ? Array.from(files) : [];
+    if (!list.length) return;
+    setBusy(true);
+    onError(null);
+    const added: KnowledgeDoc[] = [];
+    let needText = false;
+    let failed = false;
+    let tooLarge = false;
+
+    for (const file of list) {
+      if (file.size > MAX_ATTACH_BYTES) {
+        tooLarge = true;
+        continue;
+      }
+      const mime = guessMimeType(file);
+      if (mime.startsWith("image/") || isUnsupportedAttachMime(mime)) {
+        needText = true;
+        continue;
+      }
+      try {
+        const content = await extractKnowledgeText(file);
+        if (!content) {
+          needText = true;
+          continue;
+        }
+        const baseTitle = file.name.replace(/\.[^.]+$/, "").trim() || file.name;
+        added.push({
+          id: newId(),
+          title: baseTitle,
+          content,
+          sourceName: file.name,
+          updatedAt: new Date().toISOString(),
+        });
+      } catch {
+        failed = true;
+      }
+    }
+
+    if (added.length) {
+      updateDocs([...added, ...docs]);
+      setExpandedId(added[0]?.id ?? null);
+    }
+    if (needText) onError(copy.projectKnowledgeNeedText);
+    else if (tooLarge) onError(copy.attachTooLarge);
+    else if (failed) onError(copy.attachFailed);
+    setBusy(false);
+  };
+
+  return (
+    <div className="space-y-3">
+      <label className="relative inline-flex cursor-pointer items-center gap-2 rounded-full border border-input bg-card px-3 py-1.5 text-xs font-medium text-rapunzel-plum hover:bg-rapunzel-gold/30">
+        <input
+          type="file"
+          multiple
+          accept={KNOWLEDGE_ACCEPT}
+          className="absolute inset-0 z-10 cursor-pointer opacity-0"
+          disabled={busy}
+          onChange={(e) => {
+            void onAddFiles(e.target.files);
+            e.target.value = "";
+          }}
+        />
+        <Paperclip className="pointer-events-none size-3.5" />
+        <span className="pointer-events-none">
+          {busy ? "…" : copy.projectKnowledgeAdd}
+        </span>
+      </label>
+
+      {!docs.length ? (
+        <p className="text-xs text-rapunzel-ink/55">{copy.projectKnowledgeEmpty}</p>
+      ) : (
+        <ul className="space-y-3">
+          {docs.map((doc) => {
+            const open = expandedId === doc.id;
+            return (
+              <li
+                key={doc.id}
+                className="rounded-2xl border border-border/80 bg-card/80 p-3"
+              >
+                <div className="flex items-start gap-2">
+                  <button
+                    type="button"
+                    className="min-w-0 flex-1 text-left"
+                    onClick={() => setExpandedId(open ? null : doc.id)}
+                  >
+                    <p className="truncate text-sm font-medium text-rapunzel-plum">
+                      {doc.title || "Untitled"}
+                    </p>
+                    <p className="truncate text-[11px] text-rapunzel-ink/50">
+                      {doc.sourceName ||
+                        `${doc.content.length.toLocaleString()} chars`}
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-full p-1 text-rapunzel-plum/70 hover:bg-muted hover:text-destructive"
+                    title={copy.projectKnowledgeDelete}
+                    aria-label={copy.projectKnowledgeDelete}
+                    onClick={() =>
+                      updateDocs(docs.filter((item) => item.id !== doc.id))
+                    }
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </div>
+                {open ? (
+                  <div className="mt-3 space-y-2">
+                    <label className="block text-[11px] font-medium text-rapunzel-plum">
+                      {copy.projectKnowledgeTitle}
+                      <input
+                        value={doc.title}
+                        onChange={(e) =>
+                          updateDocs(
+                            docs.map((item) =>
+                              item.id === doc.id
+                                ? {
+                                    ...item,
+                                    title: e.target.value,
+                                    updatedAt: new Date().toISOString(),
+                                  }
+                                : item
+                            )
+                          )
+                        }
+                        className="mt-1 h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                      />
+                    </label>
+                    <label className="block text-[11px] font-medium text-rapunzel-plum">
+                      {copy.projectKnowledgeContent}
+                      <Textarea
+                        value={doc.content}
+                        onChange={(e) =>
+                          updateDocs(
+                            docs.map((item) =>
+                              item.id === doc.id
+                                ? {
+                                    ...item,
+                                    content: e.target.value,
+                                    updatedAt: new Date().toISOString(),
+                                  }
+                                : item
+                            )
+                          )
+                        }
+                        className="mt-1 min-h-28 rounded-xl border-border bg-card/90 text-sm"
+                      />
+                    </label>
+                  </div>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }

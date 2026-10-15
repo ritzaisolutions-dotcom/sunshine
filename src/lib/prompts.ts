@@ -170,6 +170,8 @@ export const MEMORY_MERGE_PROMPT = `You update a living memory document about No
 Return ONLY valid JSON with these string fields:
 whoSheIs, howSheLikesToLearn, goals, inProgress, alreadyUnderstands, getsStuckOn, littleThings
 
+Do not include knowledgeDocs or any other fields. Project knowledge is managed separately.
+
 Each field must keep previous content and append new durable facts as new lines when needed. If nothing new belongs in a field, return that field unchanged. Write new facts in the language Noorie used.`;
 
 export const BACKLOG_EXTRACT_PROMPT = `You extract product-upgrade wishes for the Sunshine chat app from a short transcript.

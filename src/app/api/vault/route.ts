@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
-import { EMPTY_NOTES, type ChatThread, type NourieNotes } from "@/lib/types";
+import {
+  EMPTY_NOTES,
+  normalizeNotes,
+  type ChatThread,
+  type NourieNotes,
+} from "@/lib/types";
 import { sunshineVaultKey } from "@/lib/vault-key";
 
 function vaultKey(): string {
@@ -37,7 +42,7 @@ export async function GET() {
   return NextResponse.json({
     found: true,
     chats: Array.isArray(payload.chats) ? payload.chats : [],
-    notes: payload.notes ?? EMPTY_NOTES,
+    notes: normalizeNotes(payload.notes ?? EMPTY_NOTES),
     updatedAt: payload.updatedAt ?? new Date().toISOString(),
   });
 }
@@ -59,7 +64,7 @@ export async function POST(req: NextRequest) {
   }
 
   const chats = Array.isArray(body.chats) ? body.chats : [];
-  const notes = body.notes ?? EMPTY_NOTES;
+  const notes = normalizeNotes(body.notes ?? EMPTY_NOTES);
 
   // Drop large inline images before upload so the vault stays small.
   const slimChats = chats.map((thread) => ({

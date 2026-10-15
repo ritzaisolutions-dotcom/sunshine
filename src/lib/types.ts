@@ -45,6 +45,14 @@ export type ChatThread = {
   archived: boolean;
 };
 
+export type KnowledgeDoc = {
+  id: string;
+  title: string;
+  content: string;
+  sourceName?: string;
+  updatedAt: string;
+};
+
 export type NourieNotes = {
   whoSheIs: string;
   howSheLikesToLearn: string;
@@ -53,6 +61,7 @@ export type NourieNotes = {
   alreadyUnderstands: string;
   getsStuckOn: string;
   littleThings: string;
+  knowledgeDocs: KnowledgeDoc[];
   lastUpdated: string | null;
 };
 
@@ -78,8 +87,38 @@ export const EMPTY_NOTES: NourieNotes = {
   alreadyUnderstands: "",
   getsStuckOn: "",
   littleThings: "",
+  knowledgeDocs: [],
   lastUpdated: null,
 };
+
+const MAX_KNOWLEDGE_CHARS = 90_000;
+
+export function normalizeNotes(notes: Partial<NourieNotes> | null | undefined): NourieNotes {
+  const docs = Array.isArray(notes?.knowledgeDocs) ? notes.knowledgeDocs : [];
+  return {
+    ...EMPTY_NOTES,
+    ...notes,
+    knowledgeDocs: docs
+      .filter(
+        (doc): doc is KnowledgeDoc =>
+          Boolean(doc) &&
+          typeof doc.id === "string" &&
+          typeof doc.title === "string" &&
+          typeof doc.content === "string"
+      )
+      .map((doc) => ({
+        id: doc.id,
+        title: doc.title,
+        content: doc.content,
+        sourceName:
+          typeof doc.sourceName === "string" ? doc.sourceName : undefined,
+        updatedAt:
+          typeof doc.updatedAt === "string"
+            ? doc.updatedAt
+            : new Date().toISOString(),
+      })),
+  };
+}
 
 export function notesToDocument(notes: NourieNotes): string {
   return [
@@ -107,4 +146,40 @@ export function notesToDocument(notes: NourieNotes): string {
     `## Little things to remember`,
     notes.littleThings || "(empty)",
   ].join("\n");
+}
+
+/** Build capped project-knowledge text for the chat system prompt. */
+export function knowledgeToDocument(docs: KnowledgeDoc[]): string {
+  if (!docs.length) return "";
+
+  const sorted = [...docs].sort(
+    (a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt)
+  );
+  const parts: string[] = ["# Project knowledge"];
+  let used = parts[0]!.length;
+
+  for (const doc of sorted) {
+    const block = [
+      "",
+      `## ${doc.title || "Untitled"}`,
+      doc.sourceName ? `Source: ${doc.sourceName}` : null,
+      doc.content.trim() || "(empty)",
+    ]
+      .filter((line): line is string => line !== null)
+      .join("\n");
+
+    if (used + block.length > MAX_KNOWLEDGE_CHARS) {
+      const remaining = MAX_KNOWLEDGE_CHARS - used - 80;
+      if (remaining > 200) {
+        parts.push(block.slice(0, remaining) + "\n…(truncated)");
+      } else {
+        parts.push("\n…(older project knowledge omitted to fit size limits)");
+      }
+      break;
+    }
+    parts.push(block);
+    used += block.length;
+  }
+
+  return parts.join("\n");
 }

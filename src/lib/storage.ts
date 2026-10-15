@@ -3,6 +3,7 @@ import {
   BacklogItem,
   ChatThread,
   EMPTY_NOTES,
+  normalizeNotes,
   NourieNotes,
 } from "@/lib/types";
 import type { ReplyLanguage } from "@/lib/language";
@@ -85,7 +86,7 @@ export function saveActiveChatId(id: string | null) {
 }
 
 export function loadNotes(): NourieNotes {
-  return readJson<NourieNotes>(KEYS.notes, EMPTY_NOTES);
+  return normalizeNotes(readJson<NourieNotes>(KEYS.notes, EMPTY_NOTES));
 }
 
 export function saveNotes(notes: NourieNotes) {

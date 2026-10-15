@@ -1,4 +1,4 @@
-import { ChatThread, NourieNotes } from "@/lib/types";
+import { ChatThread, NourieNotes, normalizeNotes } from "@/lib/types";
 
 type PullResult =
   | { found: false; configured: boolean }
@@ -31,7 +31,7 @@ export async function pullCloudVault(): Promise<PullResult> {
     found: true,
     configured: true,
     chats: Array.isArray(payload.chats) ? payload.chats : [],
-    notes: payload.notes as NourieNotes,
+    notes: normalizeNotes(payload.notes),
     updatedAt: payload.updatedAt ?? new Date().toISOString(),
   };
 }

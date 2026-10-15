@@ -30,6 +30,14 @@ export type ChatCopy = {
   putAway: string;
   putAwayAria: (title: string) => string;
   aboutNoorie: string;
+  projectKnowledge: string;
+  projectKnowledgeBlurb: string;
+  projectKnowledgeAdd: string;
+  projectKnowledgeEmpty: string;
+  projectKnowledgeTitle: string;
+  projectKnowledgeContent: string;
+  projectKnowledgeDelete: string;
+  projectKnowledgeNeedText: string;
   hideNotes: string;
   todosNav: string;
   settingsNav: string;
@@ -526,6 +534,16 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         putAway: "Weggelegt",
         putAwayAria: (title) => `${title} weglegen`,
         aboutNoorie: "Über Noorie",
+        projectKnowledge: "Projektwissen",
+        projectKnowledgeBlurb:
+          "Dateien und Notizen, die Maria in jedem Chat mitnimmt (in Supabase gesichert).",
+        projectKnowledgeAdd: "Datei hinzufügen",
+        projectKnowledgeEmpty: "Noch kein Projektwissen — Text oder PDF hinzufügen.",
+        projectKnowledgeTitle: "Titel",
+        projectKnowledgeContent: "Inhalt",
+        projectKnowledgeDelete: "Entfernen",
+        projectKnowledgeNeedText:
+          "Für Projektwissen bitte Text, Markdown oder ein lesbares PDF nehmen (keine Fotos).",
         hideNotes: "Notizen aus",
         todosNav: "To-dos",
         settingsNav: "Einstellungen",
@@ -533,7 +551,8 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         tryAgain: "Nochmal",
         attach: "Anhang",
         attachDrop: "Datei hier ablegen",
-        attachTooLarge: "Datei zu groß (max. 10 MB).",
+        attachTooLarge:
+          "Datei zu groß für den Upload. Bitte ein kleineres Bild/PDF nehmen (eine GoodNotes-Seite als Bild exportieren).",
         attachFailed: "Datei konnte nicht gelesen werden.",
         attachUnsupported:
           "Dieses Dateiformat wird auf dem iPhone nicht unterstützt. Bitte JPEG, PNG oder PDF nehmen.",
@@ -659,6 +678,16 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         putAway: "Put away",
         putAwayAria: (title) => `Put away ${title}`,
         aboutNoorie: "About Noorie",
+        projectKnowledge: "Project knowledge",
+        projectKnowledgeBlurb:
+          "Files and notes Maria brings into every chat (saved in Supabase).",
+        projectKnowledgeAdd: "Add file",
+        projectKnowledgeEmpty: "No project knowledge yet — add text or a PDF.",
+        projectKnowledgeTitle: "Title",
+        projectKnowledgeContent: "Content",
+        projectKnowledgeDelete: "Remove",
+        projectKnowledgeNeedText:
+          "For project knowledge, please use text, Markdown, or a readable PDF (not photos).",
         hideNotes: "Hide notes",
         todosNav: "To-dos",
         settingsNav: "Settings",
@@ -666,7 +695,8 @@ export function chatCopy(lang: ReplyLanguage): ChatCopy {
         tryAgain: "Try again",
         attach: "Attach",
         attachDrop: "Drop file here",
-        attachTooLarge: "File too large (max 10 MB).",
+        attachTooLarge:
+          "File too large to upload. Try a smaller image/PDF (export one GoodNotes page as an image).",
         attachFailed: "Could not read that file.",
         attachUnsupported:
           "This file type is not supported on iPhone. Please use JPEG, PNG, or PDF.",
